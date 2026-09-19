@@ -74,6 +74,13 @@ class OpenAIProvider(Provider):
 
 
 @dataclass
+class ChatGPTProvider(OpenAIProvider):
+    """Named OpenAI API profile for ChatGPT-oriented workflow steps."""
+
+    name: str = "chatgpt"
+
+
+@dataclass
 class AnthropicProvider(Provider):
     name: str = "anthropic"
 
@@ -120,6 +127,41 @@ class GeminiProvider(Provider):
                                 usage=data.get("usageMetadata", {}))
 
 
+@dataclass
+class GeminiJarvisProvider(GeminiProvider):
+    """Gemini transport with a dedicated Jarvis workflow identity."""
+
+    name: str = "gemini-jarvis"
+
+
+@dataclass
+class PerplexityProvider(Provider):
+    name: str = "perplexity"
+
+    def configured(self) -> bool:
+        return bool(os.getenv("PERPLEXITY_API_KEY"))
+
+    def complete(self, task: Task, timeout: int) -> ProviderResponse:
+        key = os.getenv("PERPLEXITY_API_KEY")
+        if not key:
+            raise ProviderError("PERPLEXITY_API_KEY is not configured")
+        model = os.getenv("PERPLEXITY_MODEL", "sonar-pro")
+        base = os.getenv("PERPLEXITY_BASE_URL", "https://api.perplexity.ai").rstrip("/")
+        data = _post(f"{base}/chat/completions",
+                     {"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+                     {"model": model, "messages": [
+                         {"role": "system", "content": task.system},
+                         {"role": "user", "content": task.prompt}]}, timeout)
+        choices = data.get("choices", [])
+        content = choices[0].get("message", {}).get("content", "") if choices else ""
+        usage = data.get("usage", {})
+        if data.get("citations"):
+            usage = {**usage, "citations": data["citations"]}
+        return ProviderResponse(task.id, self.name, model, content, usage=usage)
+
+
 def providers() -> dict[str, Provider]:
-    items: list[Provider] = [MockProvider(), OpenAIProvider(), AnthropicProvider(), GeminiProvider()]
+    items: list[Provider] = [MockProvider(), OpenAIProvider(), ChatGPTProvider(),
+                             AnthropicProvider(), GeminiProvider(), GeminiJarvisProvider(),
+                             PerplexityProvider()]
     return {item.name: item for item in items}
