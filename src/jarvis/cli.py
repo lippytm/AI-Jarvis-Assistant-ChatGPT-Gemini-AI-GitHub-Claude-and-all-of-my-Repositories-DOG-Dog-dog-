@@ -9,6 +9,7 @@ from .config import Settings
 from .control_tower import ControlTower
 from .providers import ProviderError
 from .workflows import WorkflowError, WorkflowRunner
+from .approvals import ApprovalQueue
 
 
 def _emit(value: Any, as_json: bool) -> None:
@@ -39,6 +40,16 @@ def parser() -> argparse.ArgumentParser:
     run.add_argument("--allow-external", action="store_true",
                      help="Allow configured providers to make billable network requests")
     run.add_argument("--json", action="store_true")
+    run.add_argument("--force", action="store_true",
+                     help="Ignore an existing idempotent run and execute again")
+    validate = commands.add_parser("validate-workflows", help="Validate every workflow definition")
+    validate.add_argument("--json", action="store_true")
+    approvals = commands.add_parser("approvals", help="List approval requests")
+    approvals.add_argument("--status", choices=["pending", "approved"])
+    approvals.add_argument("--json", action="store_true")
+    approve = commands.add_parser("approve", help="Approve a queued action without executing it")
+    approve.add_argument("approval_id")
+    approve.add_argument("--json", action="store_true")
     return root
 
 
@@ -64,7 +75,15 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "workflows":
             _emit(WorkflowRunner(tower).list(), args.json)
         elif args.command == "run":
-            _emit(WorkflowRunner(tower).run(args.workflow, args.input, args.allow_external), args.json)
+            _emit(WorkflowRunner(tower).run(args.workflow, args.input,
+                                            args.allow_external, args.force), args.json)
+        elif args.command == "validate-workflows":
+            result = WorkflowRunner(tower).validate_all()
+            _emit({"valid": not any(result.values()), "workflows": result}, args.json)
+        elif args.command == "approvals":
+            _emit(ApprovalQueue().list(args.status), args.json)
+        elif args.command == "approve":
+            _emit(ApprovalQueue().approve(args.approval_id), args.json)
         return 0
     except (ProviderError, WorkflowError, ValueError) as exc:
         print(f"Jarvis error: {exc}", file=sys.stderr)
