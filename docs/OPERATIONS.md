@@ -23,6 +23,7 @@ remain separate operations requiring a clear target and fresh authorization.
 - If a provider fails, inspect its task event in the ledger before retrying.
 - Revoke any credential that appears in a prompt, terminal output, issue, commit, or report.
 - Preserve the run ID and content hashes when moving work between systems.
+- Create a Jarvis bundle and verify its manifest before every cross-system transfer.
 
 ## Production readiness checklist
 
