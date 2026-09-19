@@ -63,6 +63,7 @@ jarvis run WORKFLOW "INPUT" [--allow-external] [--json]
 jarvis plan WORKFLOW "INPUT" [--json]
 jarvis bundle RUN_ID [--json]
 jarvis verify-bundle PATH [--json]
+jarvis doctor [--json]
 ```
 
 ## Automated workflows
@@ -87,6 +88,11 @@ live provider calls.
 Completed runs can be packaged into provenance-preserving `.jarvis.zip` transfer bundles.
 Each bundle carries a manifest and SHA-256 digest for every artifact, allowing another
 workstation to reject tampering or incomplete transfers. See [`docs/ROUND_TRIP.md`](docs/ROUND_TRIP.md).
+
+`jarvis doctor` performs a non-billable local readiness audit. GitHub also runs a weekly
+credential-free audit that validates workflows, compiles the package, runs tests, and stores
+the reports for 30 days. See the [capability matrix](docs/CAPABILITIES.md) and
+[threat model](docs/THREAT_MODEL.md).
 
 ```bash
 jarvis validate-workflows --json
