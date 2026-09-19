@@ -60,6 +60,7 @@ jarvis history [--limit 20] [--json]
 jarvis show TASK_ID [--json]
 jarvis workflows [--json]
 jarvis run WORKFLOW "INPUT" [--allow-external] [--json]
+jarvis plan WORKFLOW "INPUT" [--json]
 ```
 
 ## Automated workflows
@@ -75,6 +76,11 @@ drafts in `data/outbox`; they do not silently post, publish, or message anyone.
 Identical workflow inputs reuse their prior completed report so retries do not accidentally
 repeat paid calls. Supply `--force` only when a deliberate fresh run is required. Approval
 steps create reviewable records; approving a record does not automatically publish or spend.
+
+Every workflow has an external-call budget (`JARVIS_MAX_EXTERNAL_CALLS`, default 6), a
+no-cost planning mode, high-confidence credential detection, redacted persisted reports,
+and per-step execution timing. See [`docs/OPERATIONS.md`](docs/OPERATIONS.md) before enabling
+live provider calls.
 
 ```bash
 jarvis validate-workflows --json
