@@ -8,6 +8,7 @@ from typing import Any
 from .config import Settings
 from .control_tower import ControlTower
 from .providers import ProviderError
+from .workflows import WorkflowError, WorkflowRunner
 
 
 def _emit(value: Any, as_json: bool) -> None:
@@ -30,6 +31,14 @@ def parser() -> argparse.ArgumentParser:
     show = commands.add_parser("show", help="Show one task and its provenance")
     show.add_argument("task_id")
     show.add_argument("--json", action="store_true")
+    workflows = commands.add_parser("workflows", help="List automated workflows")
+    workflows.add_argument("--json", action="store_true")
+    run = commands.add_parser("run", help="Run an automated workflow")
+    run.add_argument("workflow")
+    run.add_argument("input")
+    run.add_argument("--allow-external", action="store_true",
+                     help="Allow configured providers to make billable network requests")
+    run.add_argument("--json", action="store_true")
     return root
 
 
@@ -52,7 +61,11 @@ def main(argv: list[str] | None = None) -> int:
                 print("Task not found", file=sys.stderr)
                 return 1
             _emit(record, args.json)
+        elif args.command == "workflows":
+            _emit(WorkflowRunner(tower).list(), args.json)
+        elif args.command == "run":
+            _emit(WorkflowRunner(tower).run(args.workflow, args.input, args.allow_external), args.json)
         return 0
-    except (ProviderError, ValueError) as exc:
+    except (ProviderError, WorkflowError, ValueError) as exc:
         print(f"Jarvis error: {exc}", file=sys.stderr)
         return 2
