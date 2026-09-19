@@ -6,6 +6,7 @@ from pathlib import Path
 from jarvis.config import Settings
 from jarvis.control_tower import ControlTower
 from jarvis.workflows import WorkflowRunner
+from jarvis.safety import find_sensitive, redact
 
 
 class WorkflowTests(unittest.TestCase):
@@ -50,6 +51,18 @@ class WorkflowTests(unittest.TestCase):
             {"id": "same", "type": "ai", "prompt": "one"},
             {"id": "same", "type": "handoff", "content": "two"}]})
         self.assertTrue(any("duplicates" in error for error in errors))
+
+    def test_plan_does_not_execute(self):
+        plan = self.runner.plan("test", "preview")
+        self.assertFalse(plan["will_execute"])
+        self.assertEqual(plan["external_calls"], 0)
+
+    def test_sensitive_credentials_are_blocked_and_redacted(self):
+        secret = "sk-abcdefghijklmnopqrstuvwxyz123456"
+        self.assertTrue(find_sensitive(secret))
+        self.assertNotIn(secret, redact(secret))
+        with self.assertRaisesRegex(Exception, "Sensitive input"):
+            self.runner.run("test", secret)
 
 
 if __name__ == "__main__":
