@@ -10,6 +10,7 @@ from .control_tower import ControlTower
 from .providers import ProviderError
 from .workflows import WorkflowError, WorkflowRunner
 from .approvals import ApprovalQueue
+from .bundles import BundleError, RunBundler
 
 
 def _emit(value: Any, as_json: bool) -> None:
@@ -56,6 +57,12 @@ def parser() -> argparse.ArgumentParser:
     approve = commands.add_parser("approve", help="Approve a queued action without executing it")
     approve.add_argument("approval_id")
     approve.add_argument("--json", action="store_true")
+    bundle = commands.add_parser("bundle", help="Create a portable verified run bundle")
+    bundle.add_argument("run_id")
+    bundle.add_argument("--json", action="store_true")
+    verify = commands.add_parser("verify-bundle", help="Verify a Jarvis transfer bundle")
+    verify.add_argument("path")
+    verify.add_argument("--json", action="store_true")
     return root
 
 
@@ -93,7 +100,12 @@ def main(argv: list[str] | None = None) -> int:
             _emit(ApprovalQueue().list(args.status), args.json)
         elif args.command == "approve":
             _emit(ApprovalQueue().approve(args.approval_id), args.json)
+        elif args.command == "bundle":
+            _emit(RunBundler().create(args.run_id), args.json)
+        elif args.command == "verify-bundle":
+            from pathlib import Path
+            _emit(RunBundler().verify(Path(args.path)), args.json)
         return 0
-    except (ProviderError, WorkflowError, ValueError) as exc:
+    except (ProviderError, WorkflowError, BundleError, ValueError) as exc:
         print(f"Jarvis error: {exc}", file=sys.stderr)
         return 2
