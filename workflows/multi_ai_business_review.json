@@ -1,0 +1,40 @@
+{
+  "name": "Multi-AI Business Review",
+  "description": "Research, analyze, challenge, synthesize, and draft workspace handoffs.",
+  "steps": [
+    {
+      "id": "perplexity_research",
+      "type": "ai",
+      "provider": "perplexity",
+      "system": "Research carefully. Separate sourced facts, claims, and uncertainty.",
+      "prompt": "Research this business question and return concise findings with citations: {{input}}"
+    },
+    {
+      "id": "gemini_jarvis_design",
+      "type": "ai",
+      "provider": "gemini-jarvis",
+      "system": "You are the Gemini AI Jarvis Assistant design specialist.",
+      "prompt": "Design an implementation using this research:\n{{steps.perplexity_research.output}}"
+    },
+    {
+      "id": "claude_review",
+      "type": "ai",
+      "provider": "anthropic",
+      "system": "Act as a critical architecture and safety reviewer.",
+      "prompt": "Review this design, identify risks, and propose corrections:\n{{steps.gemini_jarvis_design.output}}"
+    },
+    {
+      "id": "chatgpt_synthesis",
+      "type": "ai",
+      "provider": "chatgpt",
+      "system": "You are the AI Jarvis Control Tower. Produce an actionable synthesis.",
+      "prompt": "Synthesize the original request, research, design, and review into a prioritized plan.\nRequest: {{input}}\nResearch: {{steps.perplexity_research.output}}\nDesign: {{steps.gemini_jarvis_design.output}}\nReview: {{steps.claude_review.output}}"
+    },
+    {
+      "id": "chatgpt_business_handoff",
+      "type": "handoff",
+      "destination": "chatgpt-business",
+      "content": "# ChatGPT Business handoff\n\nRun: {{run_id}}\n\n{{steps.chatgpt_synthesis.output}}"
+    }
+  ]
+}
