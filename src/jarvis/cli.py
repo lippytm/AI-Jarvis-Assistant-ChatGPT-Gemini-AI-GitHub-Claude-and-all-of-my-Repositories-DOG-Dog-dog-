@@ -42,6 +42,12 @@ def parser() -> argparse.ArgumentParser:
     run.add_argument("--json", action="store_true")
     run.add_argument("--force", action="store_true",
                      help="Ignore an existing idempotent run and execute again")
+    run.add_argument("--allow-sensitive", action="store_true",
+                     help="Allow detected credentials in input (strongly discouraged)")
+    plan = commands.add_parser("plan", help="Preview a workflow without executing it")
+    plan.add_argument("workflow")
+    plan.add_argument("input")
+    plan.add_argument("--json", action="store_true")
     validate = commands.add_parser("validate-workflows", help="Validate every workflow definition")
     validate.add_argument("--json", action="store_true")
     approvals = commands.add_parser("approvals", help="List approval requests")
@@ -76,7 +82,10 @@ def main(argv: list[str] | None = None) -> int:
             _emit(WorkflowRunner(tower).list(), args.json)
         elif args.command == "run":
             _emit(WorkflowRunner(tower).run(args.workflow, args.input,
-                                            args.allow_external, args.force), args.json)
+                                            args.allow_external, args.force,
+                                            args.allow_sensitive), args.json)
+        elif args.command == "plan":
+            _emit(WorkflowRunner(tower).plan(args.workflow, args.input), args.json)
         elif args.command == "validate-workflows":
             result = WorkflowRunner(tower).validate_all()
             _emit({"valid": not any(result.values()), "workflows": result}, args.json)
