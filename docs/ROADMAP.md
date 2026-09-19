@@ -12,6 +12,7 @@
 - Repository registry for the lippytm portfolio
 - Prompt #11 task templates and round-trip provenance export/import
 - Idempotency keys and retry policy
+- Automated JSON workflow runner and multi-AI review pipeline (foundation delivered)
 
 ## v0.3 — Hostinger and communications
 
