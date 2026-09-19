@@ -70,6 +70,17 @@ drafts in `data/outbox`; they do not silently post, publish, or message anyone.
 
 - `multi_ai_business_review`: Perplexity research → Gemini Jarvis design → Claude review → ChatGPT synthesis → ChatGPT Business draft handoff.
 - `repository_fleet_review`: GitHub inventory of accessible repositories → ChatGPT portfolio review → GitHub draft handoff.
+- `prompt_11_product_factory`: market research → product genome → independent QA challenge → master build → owner approval → Business handoff.
+
+Identical workflow inputs reuse their prior completed report so retries do not accidentally
+repeat paid calls. Supply `--force` only when a deliberate fresh run is required. Approval
+steps create reviewable records; approving a record does not automatically publish or spend.
+
+```bash
+jarvis validate-workflows --json
+jarvis approvals --status pending
+jarvis approve APPROVAL_ID
+```
 
 `ChatGPT Business` is a workspace product, not a general automation endpoint. This project
 uses the OpenAI API for automated model calls and creates explicit handoff artifacts for the
