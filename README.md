@@ -6,5 +6,5 @@ Build AI Jarvis Assistant connections throughout the internet so Jarvis is prese
 
 ## Focus
 - Connect Jarvis with ChatGPT, Gemini, Claude, GitHub, and all related repositories.
-- Support business building with Jarvis/DOG, Dog/dog workflows.
+- Support business building with Jarvis/DOG workflows (also referred to here as Dog/dog naming variants).
 - Keep Jarvis available across platforms so every place I am, my AI Jarvis Assistant is there.
