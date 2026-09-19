@@ -7,7 +7,7 @@ An auditable, provider-neutral assistant that coordinates work across OpenAI, Ge
 ## What works now
 
 - One task contract shared by every AI provider
-- OpenAI, Anthropic Claude, Google Gemini, and offline mock adapters
+- OpenAI, ChatGPT, Anthropic Claude, Google Gemini, Gemini-Jarvis, Perplexity, and offline mock adapters
 - SQLite task, event, and response ledger with provenance
 - Correlation IDs, timestamps, provider/model records, and response hashes
 - Connector health checks that never reveal secrets
@@ -37,6 +37,8 @@ python -m pip install -e .
 jarvis health
 jarvis ask "Create a three-step business launch checklist" --provider mock
 jarvis history
+jarvis workflows
+jarvis run multi_ai_business_review "Evaluate my new product idea" --allow-external
 ```
 
 The default is `mock`, so the project runs without paid API calls. Set environment variables described in [`.env.example`](.env.example) to enable a real provider. The CLI intentionally does not automatically load `.env`; a shell, secret manager, or deployment platform should inject secrets.
@@ -56,7 +58,22 @@ jarvis health [--json]
 jarvis ask "TASK" [--provider mock|openai|anthropic|gemini] [--system "..."] [--json]
 jarvis history [--limit 20] [--json]
 jarvis show TASK_ID [--json]
+jarvis workflows [--json]
+jarvis run WORKFLOW "INPUT" [--allow-external] [--json]
 ```
+
+## Automated workflows
+
+Workflow definitions live in `workflows/*.json`. External AI calls are skipped unless
+`--allow-external` is supplied, preventing accidental paid requests. Handoff steps create
+drafts in `data/outbox`; they do not silently post, publish, or message anyone.
+
+- `multi_ai_business_review`: Perplexity research → Gemini Jarvis design → Claude review → ChatGPT synthesis → ChatGPT Business draft handoff.
+- `repository_fleet_review`: GitHub inventory of accessible repositories → ChatGPT portfolio review → GitHub draft handoff.
+
+`ChatGPT Business` is a workspace product, not a general automation endpoint. This project
+uses the OpenAI API for automated model calls and creates explicit handoff artifacts for the
+Business workspace. That boundary prevents a misleading or fragile integration claim.
 
 Future connectors implement `Connector` and declare read, draft, write, or destructive risk. Writes need explicit approval; destructive actions are disabled in v0.1. See [`docs/CONNECTORS.md`](docs/CONNECTORS.md) and [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
