@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+import time
 from hashlib import sha256
 from dataclasses import dataclass
 from pathlib import Path
@@ -12,6 +13,7 @@ from .control_tower import ControlTower
 from .approvals import ApprovalQueue
 from .github_inventory import list_repositories
 from .models import utc_now
+from .safety import find_sensitive, redact
 
 
 TOKEN = re.compile(r"{{\s*([a-zA-Z0-9_.-]+)\s*}}")
@@ -51,6 +53,26 @@ class WorkflowRunner:
                 results[path.stem] = [f"Invalid JSON: {exc.msg}"]
         return results
 
+    def plan(self, name: str, input_text: str) -> dict[str, Any]:
+        definition = self.load(name)
+        planned = []
+        external_calls = 0
+        for step in definition["steps"]:
+            provider = step.get("provider") if step.get("type") == "ai" else None
+            external = bool(provider and provider != "mock")
+            external_calls += int(external)
+            planned.append({"id": step["id"], "type": step["type"], "provider": provider,
+                            "external": external,
+                            "configured": (self.tower.providers[provider].configured()
+                                           if provider in self.tower.providers else None)})
+        findings = sorted({finding.kind for finding in find_sensitive(input_text)})
+        return {"workflow": name, "valid": True, "steps": planned,
+                "external_calls": external_calls,
+                "external_call_budget": self.tower.settings.max_external_calls,
+                "within_budget": external_calls <= self.tower.settings.max_external_calls,
+                "sensitive_findings": findings,
+                "will_execute": False}
+
     @staticmethod
     def validate_definition(definition: dict[str, Any]) -> list[str]:
         errors: list[str] = []
@@ -77,8 +99,17 @@ class WorkflowRunner:
         return errors
 
     def run(self, name: str, input_text: str, allow_external: bool = False,
-            force: bool = False) -> dict[str, Any]:
+            force: bool = False, allow_sensitive: bool = False) -> dict[str, Any]:
         definition = self.load(name)
+        external_calls = sum(1 for step in definition["steps"]
+                             if step.get("type") == "ai" and step.get("provider", "mock") != "mock")
+        if external_calls > self.tower.settings.max_external_calls:
+            raise WorkflowError(f"Workflow requires {external_calls} external calls but budget is "
+                                f"{self.tower.settings.max_external_calls}")
+        findings = find_sensitive(input_text)
+        if findings and not allow_sensitive:
+            kinds = ", ".join(sorted({finding.kind for finding in findings}))
+            raise WorkflowError(f"Sensitive input detected ({kinds}); remove it or explicitly allow it")
         idempotency_key = sha256(f"{name}\0{input_text}".encode()).hexdigest()
         self.run_dir.mkdir(parents=True, exist_ok=True)
         cache_path = self.run_dir / f"{idempotency_key}.json"
@@ -90,6 +121,8 @@ class WorkflowRunner:
         context: dict[str, Any] = {"input": input_text, "run_id": run_id, "steps": {}}
         results: list[dict[str, Any]] = []
         for step in definition["steps"]:
+            started = time.monotonic()
+            started_at = utc_now()
             step_id = step["id"]
             kind = step["type"]
             if kind == "ai":
@@ -127,14 +160,16 @@ class WorkflowRunner:
             else:
                 raise WorkflowError(f"Unsupported step type '{kind}'")
             context["steps"][step_id] = result
-            results.append({"id": step_id, "type": kind, **result})
+            results.append({"id": step_id, "type": kind, "started_at": started_at,
+                            "duration_ms": round((time.monotonic() - started) * 1000, 2), **result})
         report = {"workflow": name, "run_id": run_id, "idempotency_key": idempotency_key,
                   "created_at": utc_now(),
                   "status": "completed", "steps": results}
         self.outbox_dir.mkdir(parents=True, exist_ok=True)
+        safe_report = json.loads(redact(json.dumps(report)))
         (self.outbox_dir / f"{run_id}-report.json").write_text(
-            json.dumps(report, indent=2), encoding="utf-8")
-        cache_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
+            json.dumps(safe_report, indent=2), encoding="utf-8")
+        cache_path.write_text(json.dumps(safe_report, indent=2), encoding="utf-8")
         return report
 
     @classmethod
