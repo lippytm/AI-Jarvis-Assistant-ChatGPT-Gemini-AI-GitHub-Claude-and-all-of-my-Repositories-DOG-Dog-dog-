@@ -11,6 +11,7 @@ from .providers import ProviderError
 from .workflows import WorkflowError, WorkflowRunner
 from .approvals import ApprovalQueue
 from .bundles import BundleError, RunBundler
+from .doctor import Doctor
 
 
 def _emit(value: Any, as_json: bool) -> None:
@@ -63,6 +64,8 @@ def parser() -> argparse.ArgumentParser:
     verify = commands.add_parser("verify-bundle", help="Verify a Jarvis transfer bundle")
     verify.add_argument("path")
     verify.add_argument("--json", action="store_true")
+    doctor = commands.add_parser("doctor", help="Run a non-billable readiness audit")
+    doctor.add_argument("--json", action="store_true")
     return root
 
 
@@ -105,6 +108,8 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "verify-bundle":
             from pathlib import Path
             _emit(RunBundler().verify(Path(args.path)), args.json)
+        elif args.command == "doctor":
+            _emit(Doctor(tower).run(), args.json)
         return 0
     except (ProviderError, WorkflowError, BundleError, ValueError) as exc:
         print(f"Jarvis error: {exc}", file=sys.stderr)
