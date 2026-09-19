@@ -20,7 +20,7 @@ class WorkflowTests(unittest.TestCase):
              "content": "Result: {{steps.draft.output}}"}]}
         (self.workflow_dir / "test.json").write_text(json.dumps(definition), encoding="utf-8")
         tower = ControlTower(Settings("mock", root / "ledger.sqlite3", 5))
-        self.runner = WorkflowRunner(tower, self.workflow_dir, root / "outbox")
+        self.runner = WorkflowRunner(tower, self.workflow_dir, root / "outbox", root / "runs")
 
     def tearDown(self):
         self.temp.cleanup()
@@ -38,6 +38,18 @@ class WorkflowTests(unittest.TestCase):
         (self.workflow_dir / "external.json").write_text(json.dumps(definition), encoding="utf-8")
         report = self.runner.run("external", "question")
         self.assertEqual(report["steps"][0]["status"], "skipped")
+
+    def test_duplicate_run_is_reused(self):
+        first = self.runner.run("test", "same request")
+        second = self.runner.run("test", "same request")
+        self.assertEqual(first["run_id"], second["run_id"])
+        self.assertTrue(second["reused"])
+
+    def test_validation_rejects_duplicate_ids(self):
+        errors = self.runner.validate_definition({"steps": [
+            {"id": "same", "type": "ai", "prompt": "one"},
+            {"id": "same", "type": "handoff", "content": "two"}]})
+        self.assertTrue(any("duplicates" in error for error in errors))
 
 
 if __name__ == "__main__":
