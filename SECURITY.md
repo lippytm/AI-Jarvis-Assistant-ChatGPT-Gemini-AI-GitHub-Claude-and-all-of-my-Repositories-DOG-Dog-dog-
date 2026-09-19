@@ -10,3 +10,6 @@ Do not open a public issue containing a credential, private customer record, or 
 - Do not place regulated or highly sensitive data in the local SQLite ledger.
 
 The v0.1 foundation is not suitable for autonomous financial transactions, production secrets, or unattended destructive actions.
+
+Enable GitHub's Dependency Graph in repository security settings before adding the
+`actions/dependency-review-action` workflow; GitHub rejects that action when the graph is disabled.
