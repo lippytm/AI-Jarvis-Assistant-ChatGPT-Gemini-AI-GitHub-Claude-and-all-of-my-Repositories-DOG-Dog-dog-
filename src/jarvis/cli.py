@@ -12,6 +12,7 @@ from .workflows import WorkflowError, WorkflowRunner
 from .approvals import ApprovalQueue
 from .bundles import BundleError, RunBundler
 from .doctor import Doctor
+from .intake import IntakeBridge, IntakeError
 
 
 def _emit(value: Any, as_json: bool) -> None:
@@ -66,6 +67,14 @@ def parser() -> argparse.ArgumentParser:
     verify.add_argument("--json", action="store_true")
     doctor = commands.add_parser("doctor", help="Run a non-billable readiness audit")
     doctor.add_argument("--json", action="store_true")
+    intake = commands.add_parser("intake", help="Capture a file from another AI workspace")
+    intake.add_argument("source", help="Source system, such as gemini or claude")
+    intake.add_argument("path", help="UTF-8 text, Markdown, or JSON export")
+    intake.add_argument("--title")
+    intake.add_argument("--allow-sensitive", action="store_true")
+    intake.add_argument("--json", action="store_true")
+    intakes = commands.add_parser("intakes", help="List captured cross-system intakes")
+    intakes.add_argument("--json", action="store_true")
     return root
 
 
@@ -110,7 +119,13 @@ def main(argv: list[str] | None = None) -> int:
             _emit(RunBundler().verify(Path(args.path)), args.json)
         elif args.command == "doctor":
             _emit(Doctor(tower).run(), args.json)
+        elif args.command == "intake":
+            from pathlib import Path
+            _emit(IntakeBridge().capture(args.source, Path(args.path), args.title,
+                                           args.allow_sensitive), args.json)
+        elif args.command == "intakes":
+            _emit(IntakeBridge().list(), args.json)
         return 0
-    except (ProviderError, WorkflowError, BundleError, ValueError) as exc:
+    except (ProviderError, WorkflowError, BundleError, IntakeError, ValueError) as exc:
         print(f"Jarvis error: {exc}", file=sys.stderr)
         return 2
