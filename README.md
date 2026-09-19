@@ -61,6 +61,8 @@ jarvis show TASK_ID [--json]
 jarvis workflows [--json]
 jarvis run WORKFLOW "INPUT" [--allow-external] [--json]
 jarvis plan WORKFLOW "INPUT" [--json]
+jarvis bundle RUN_ID [--json]
+jarvis verify-bundle PATH [--json]
 ```
 
 ## Automated workflows
@@ -81,6 +83,10 @@ Every workflow has an external-call budget (`JARVIS_MAX_EXTERNAL_CALLS`, default
 no-cost planning mode, high-confidence credential detection, redacted persisted reports,
 and per-step execution timing. See [`docs/OPERATIONS.md`](docs/OPERATIONS.md) before enabling
 live provider calls.
+
+Completed runs can be packaged into provenance-preserving `.jarvis.zip` transfer bundles.
+Each bundle carries a manifest and SHA-256 digest for every artifact, allowing another
+workstation to reject tampering or incomplete transfers. See [`docs/ROUND_TRIP.md`](docs/ROUND_TRIP.md).
 
 ```bash
 jarvis validate-workflows --json
