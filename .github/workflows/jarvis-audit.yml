@@ -1,0 +1,36 @@
+name: jarvis-audit
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 15 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jarvis-audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: python -m pip install -e .
+      - run: python -m unittest discover -s tests -v
+      - run: python -m jarvis validate-workflows --json | tee workflow-validation.json
+      - run: python -m jarvis doctor --json | tee jarvis-doctor.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jarvis-audit-${{ github.run_number }}
+          path: |
+            workflow-validation.json
+            jarvis-doctor.json
+          retention-days: 30
+
+# This audit intentionally has no provider credentials and cannot make paid AI calls.
