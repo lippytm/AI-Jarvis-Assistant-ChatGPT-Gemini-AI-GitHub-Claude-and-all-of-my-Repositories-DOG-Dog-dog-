@@ -12,6 +12,7 @@
 | Perplexity | Research response with available citations | Yes | No |
 | GitHub | Public or token-scoped repository inventory | Optional | No |
 | Hostinger | Documented future connector boundary | Yes | Not implemented |
+| Gemini/Claude exports | Provenance-recorded intake and Business handoff | No | No |
 
 “Configured” means the required environment variable exists. It does not prove that a key is
 valid, funded, correctly scoped, or accepted until an explicitly authorized live request runs.
