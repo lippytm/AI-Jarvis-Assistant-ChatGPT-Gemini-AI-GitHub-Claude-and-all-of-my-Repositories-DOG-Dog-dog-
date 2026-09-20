@@ -93,7 +93,6 @@ export async function orchestrate(input, env = process.env) {
   const available = configuredProviders(env);
   const assistantProfile = selectAssistantProfile(envelope);
   const prompt = buildPrompt(envelope, assistantProfile);
-  const approvalActions = [envelope.requestedAction, envelope.originalRequestedAction].filter(Boolean);
   const results = {};
   const calls = [];
   if (available.openai) calls.push(askOpenAI(prompt, env).then(value => { results.openai = value; }));
@@ -106,7 +105,7 @@ export async function orchestrate(input, env = process.env) {
     assistantProfile: assistantProfile.id,
     providersUsed: Object.keys(results),
     results,
-    status: approvalActions.some(action => approvalRequired.has(action)) ? 'approval_required' : 'draft_ready',
+    status: approvalRequired.has(envelope.requestedAction) ? 'approval_required' : 'draft_ready',
     execute: false
   };
 }
