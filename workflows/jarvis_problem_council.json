@@ -1,0 +1,60 @@
+{
+  "name": "Jarvis Problem Council",
+  "description": "Independent research, scenario analysis, adversarial review, synthesis, and verification for difficult problems.",
+  "steps": [
+    {
+      "id": "evidence_research",
+      "type": "ai",
+      "provider": "perplexity",
+      "system": "Investigate evidence. Separate verified facts, assumptions, disputed claims, missing information, and uncertainty. Cite primary sources where possible.",
+      "prompt": "Research this problem without assuming it is solvable: {{input}}"
+    },
+    {
+      "id": "scenario_model",
+      "type": "ai",
+      "provider": "gemini-jarvis",
+      "system": "Generate diverse scenarios, second-order effects, edge cases, failure modes, and reversible experiments. Do not manufacture certainty.",
+      "prompt": "Model this problem and the evidence across best case, expected case, worst case, adversarial case, and unknown-unknown probes. Problem: {{input}}\nEvidence: {{steps.evidence_research.output}}"
+    },
+    {
+      "id": "adversarial_review",
+      "type": "ai",
+      "provider": "anthropic",
+      "system": "Act as a skeptical red-team reviewer. Search for contradictions, unsafe assumptions, missing stakeholders, security risks, and reasons every proposed approach might fail.",
+      "prompt": "Red-team the problem and scenario model. Problem: {{input}}\nEvidence: {{steps.evidence_research.output}}\nScenarios: {{steps.scenario_model.output}}"
+    },
+    {
+      "id": "solution_synthesis",
+      "type": "ai",
+      "provider": "chatgpt",
+      "system": "Synthesize multiple independent analyses into a testable decision portfolio. Prefer reversible steps, measurable outcomes, and explicit stopping rules.",
+      "prompt": "Create ranked solution options with evidence, tradeoffs, experiments, success metrics, stop conditions, and escalation paths. Problem: {{input}}\nEvidence: {{steps.evidence_research.output}}\nScenarios: {{steps.scenario_model.output}}\nRed team: {{steps.adversarial_review.output}}"
+    },
+    {
+      "id": "blind_spot_challenge",
+      "type": "ai",
+      "provider": "gemini",
+      "system": "Look specifically for blind spots and alternatives that the other models missed. Do not agree merely to create consensus.",
+      "prompt": "Challenge this synthesis and identify missing options, unintended consequences, or invalid reasoning. {{steps.solution_synthesis.output}}"
+    },
+    {
+      "id": "verification_gate",
+      "type": "ai",
+      "provider": "anthropic",
+      "system": "Verify logical consistency and evidence coverage. Mark each important claim as supported, unsupported, uncertain, or requiring a real-world test.",
+      "prompt": "Audit the proposed solutions and blind-spot challenge. Return a verification matrix and a recommended smallest safe experiment. Synthesis: {{steps.solution_synthesis.output}}\nChallenge: {{steps.blind_spot_challenge.output}}"
+    },
+    {
+      "id": "owner_decision",
+      "type": "approval",
+      "action": "authorize_problem_experiment",
+      "summary": "Problem Council completed. Review the verified smallest safe experiment before any system change. Verification: {{steps.verification_gate.output}}"
+    },
+    {
+      "id": "decision_handoff",
+      "type": "handoff",
+      "destination": "chatgpt-business",
+      "content": "# Jarvis Problem Council\n\nRun: {{run_id}}\n\n## Problem\n{{input}}\n\n## Proposed portfolio\n{{steps.solution_synthesis.output}}\n\n## Blind-spot challenge\n{{steps.blind_spot_challenge.output}}\n\n## Verification gate\n{{steps.verification_gate.output}}\n\n## Approval\n{{steps.owner_decision.output}}"
+    }
+  ]
+}
