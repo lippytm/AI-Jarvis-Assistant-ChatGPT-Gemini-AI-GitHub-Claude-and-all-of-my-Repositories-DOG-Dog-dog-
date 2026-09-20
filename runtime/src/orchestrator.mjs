@@ -25,16 +25,16 @@ const assistantProfiles = [
 function resolveRequestedAction(value) {
   const normalizedValue = typeof value === 'string' ? value.trim() : value;
   if (normalizedValue === undefined || normalizedValue === null) {
-    return { requestedAction: 'analyze_repository', requestedActionSource: 'default' };
+    return { requestedAction: 'analyze', canonicalRequestedAction: 'analyze_repository', requestedActionSource: 'default' };
   }
-  if (normalizedValue === '') return { requestedAction: 'analyze_repository', requestedActionSource: 'default' };
-  if (normalizedValue === 'analyze') return { requestedAction: 'analyze_repository', requestedActionSource: 'legacy' };
-  return { requestedAction: normalizedValue, requestedActionSource: 'explicit' };
+  if (normalizedValue === '') return { requestedAction: 'analyze', canonicalRequestedAction: 'analyze_repository', requestedActionSource: 'default' };
+  if (normalizedValue === 'analyze') return { requestedAction: 'analyze', canonicalRequestedAction: 'analyze_repository', requestedActionSource: 'legacy' };
+  return { requestedAction: normalizedValue, canonicalRequestedAction: normalizedValue, requestedActionSource: 'explicit' };
 }
 
 export function createEnvelope(input) {
   if (!input || typeof input !== 'object' || !input.task) throw new Error('A task is required');
-  const { requestedAction, requestedActionSource } = resolveRequestedAction(input.requestedAction);
+  const { requestedAction, canonicalRequestedAction, requestedActionSource } = resolveRequestedAction(input.requestedAction);
   const originalRequestedAction = Object.hasOwn(input, 'requestedAction') ? input.requestedAction : null;
   return {
     id: input.id || crypto.randomUUID(),
@@ -48,14 +48,16 @@ export function createEnvelope(input) {
     context: input.context && typeof input.context === 'object' ? input.context : {},
     originalRequestedAction,
     requestedAction,
+    canonicalRequestedAction,
     requestedActionSource,
     createdAt: new Date().toISOString()
   };
 }
 
 export function selectAssistantProfile(envelope) {
+  const action = envelope.canonicalRequestedAction || envelope.requestedAction;
   for (const profile of assistantProfiles) {
-    if (profile.actions.has(envelope.requestedAction)) {
+    if (profile.actions.has(action)) {
       return profile;
     }
   }
@@ -63,6 +65,7 @@ export function selectAssistantProfile(envelope) {
     envelope.task,
     envelope.category,
     envelope.requestedAction,
+    envelope.canonicalRequestedAction,
     ...envelope.goals,
     ...envelope.diagnostics,
     ...envelope.constraints,
@@ -106,7 +109,7 @@ export async function orchestrate(input, env = process.env) {
     assistantProfile: assistantProfile.id,
     providersUsed: Object.keys(results),
     results,
-    status: approvalRequired.has(envelope.requestedAction) ? 'approval_required' : 'draft_ready',
+    status: approvalRequired.has(envelope.canonicalRequestedAction || envelope.requestedAction) ? 'approval_required' : 'draft_ready',
     execute: false
   };
 }

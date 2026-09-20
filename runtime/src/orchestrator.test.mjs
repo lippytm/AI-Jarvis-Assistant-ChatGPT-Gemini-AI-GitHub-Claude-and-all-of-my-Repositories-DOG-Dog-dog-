@@ -12,6 +12,7 @@ const debugEnvelope = createEnvelope({
 });
 
 assert.equal(debugEnvelope.requestedAction, 'debug_failure');
+assert.equal(debugEnvelope.canonicalRequestedAction, 'debug_failure');
 assert.deepEqual(debugEnvelope.goals, ['restore service']);
 assert.deepEqual(debugEnvelope.diagnostics, ['stack trace attached']);
 assert.deepEqual(debugEnvelope.constraints, ['do not deploy automatically']);
@@ -55,7 +56,8 @@ assert.equal(selectAssistantProfile(standardEnvelope).id, 'standard');
 const defaultEnvelope = createEnvelope({
   task: 'Analyze repository health'
 });
-assert.equal(defaultEnvelope.requestedAction, 'analyze_repository');
+assert.equal(defaultEnvelope.requestedAction, 'analyze');
+assert.equal(defaultEnvelope.canonicalRequestedAction, 'analyze_repository');
 assert.equal(defaultEnvelope.requestedActionSource, 'default');
 assert.equal(defaultEnvelope.originalRequestedAction, null);
 
@@ -63,7 +65,8 @@ const legacyEnvelope = createEnvelope({
   task: 'Analyze repository health',
   requestedAction: 'analyze'
 });
-assert.equal(legacyEnvelope.requestedAction, 'analyze_repository');
+assert.equal(legacyEnvelope.requestedAction, 'analyze');
+assert.equal(legacyEnvelope.canonicalRequestedAction, 'analyze_repository');
 assert.equal(legacyEnvelope.requestedActionSource, 'legacy');
 assert.equal(legacyEnvelope.originalRequestedAction, 'analyze');
 
@@ -72,7 +75,8 @@ const emptyActionEnvelope = createEnvelope({
   requestedAction: ''
 });
 assert.equal(emptyActionEnvelope.originalRequestedAction, '');
-assert.equal(emptyActionEnvelope.requestedAction, 'analyze_repository');
+assert.equal(emptyActionEnvelope.requestedAction, 'analyze');
+assert.equal(emptyActionEnvelope.canonicalRequestedAction, 'analyze_repository');
 assert.equal(emptyActionEnvelope.requestedActionSource, 'default');
 
 const falseActionEnvelope = createEnvelope({
@@ -86,7 +90,8 @@ const paddedLegacyEnvelope = createEnvelope({
   task: 'Analyze repository health',
   requestedAction: ' analyze '
 });
-assert.equal(paddedLegacyEnvelope.requestedAction, 'analyze_repository');
+assert.equal(paddedLegacyEnvelope.requestedAction, 'analyze');
+assert.equal(paddedLegacyEnvelope.canonicalRequestedAction, 'analyze_repository');
 assert.equal(paddedLegacyEnvelope.requestedActionSource, 'legacy');
 
 console.log('Orchestrator assistant profile checks passed');
