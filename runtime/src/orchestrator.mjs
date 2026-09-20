@@ -30,7 +30,7 @@ function resolveRequestedAction(value) {
     return { requestedAction: 'analyze', canonicalRequestedAction: 'analyze_repository', requestedActionSource: 'default' };
   }
   if (trimmedValue === '') {
-    return { requestedAction: 'analyze_repository', canonicalRequestedAction: 'analyze_repository', requestedActionSource: 'default' };
+    return { requestedAction: 'analyze', canonicalRequestedAction: 'analyze_repository', requestedActionSource: 'default' };
   }
   if (trimmedValue === 'analyze') return { requestedAction: 'analyze', canonicalRequestedAction: 'analyze_repository', requestedActionSource: 'legacy' };
   return { requestedAction: normalizedValue, canonicalRequestedAction: normalizedValue, requestedActionSource: 'explicit' };

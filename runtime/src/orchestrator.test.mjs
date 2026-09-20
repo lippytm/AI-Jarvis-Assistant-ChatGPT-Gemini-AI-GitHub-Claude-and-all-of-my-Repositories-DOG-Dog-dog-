@@ -87,6 +87,7 @@ const standardEnvelope = createEnvelope({
   requestedAction: 'summarize_changes'
 });
 assert.equal(selectAssistantProfile(standardEnvelope).id, 'standard');
+assert.match(buildPrompt(standardEnvelope), /repository-safe analysis, explicit risks, and actionable next steps/);
 
 const defaultEnvelope = createEnvelope({
   task: 'Analyze repository health'
@@ -110,7 +111,7 @@ const emptyActionEnvelope = createEnvelope({
   requestedAction: ''
 });
 assert.equal(emptyActionEnvelope.originalRequestedAction, '');
-assert.equal(emptyActionEnvelope.requestedAction, 'analyze_repository');
+assert.equal(emptyActionEnvelope.requestedAction, 'analyze');
 assert.equal(emptyActionEnvelope.canonicalRequestedAction, 'analyze_repository');
 assert.equal(emptyActionEnvelope.requestedActionSource, 'default');
 
