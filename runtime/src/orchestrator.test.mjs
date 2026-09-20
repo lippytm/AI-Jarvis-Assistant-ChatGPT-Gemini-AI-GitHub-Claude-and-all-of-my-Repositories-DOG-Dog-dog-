@@ -73,7 +73,7 @@ const emptyActionEnvelope = createEnvelope({
 });
 assert.equal(emptyActionEnvelope.originalRequestedAction, '');
 assert.equal(emptyActionEnvelope.requestedAction, 'analyze_repository');
-assert.equal(emptyActionEnvelope.requestedActionSource, 'explicit');
+assert.equal(emptyActionEnvelope.requestedActionSource, 'default');
 
 const falseActionEnvelope = createEnvelope({
   task: 'Analyze repository health',

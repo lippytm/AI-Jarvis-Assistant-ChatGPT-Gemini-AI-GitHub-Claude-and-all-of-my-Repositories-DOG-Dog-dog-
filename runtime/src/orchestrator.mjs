@@ -27,7 +27,7 @@ function resolveRequestedAction(value) {
   if (normalizedValue === undefined || normalizedValue === null) {
     return { requestedAction: 'analyze_repository', requestedActionSource: 'default' };
   }
-  if (normalizedValue === '') return { requestedAction: 'analyze_repository', requestedActionSource: 'explicit' };
+  if (normalizedValue === '') return { requestedAction: 'analyze_repository', requestedActionSource: 'default' };
   if (normalizedValue === 'analyze') return { requestedAction: 'analyze_repository', requestedActionSource: 'legacy' };
   return { requestedAction: normalizedValue, requestedActionSource: 'explicit' };
 }
