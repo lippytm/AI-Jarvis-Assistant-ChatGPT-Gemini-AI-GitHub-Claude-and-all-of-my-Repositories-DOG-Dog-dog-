@@ -1,24 +1,23 @@
 import { askClaude, askGemini, askOpenAI, configuredProviders } from './providers.mjs';
 
 const approvalRequired = new Set(['deploy', 'merge', 'delete', 'external_message', 'secret_change', 'financial_commitment']);
-const genericProfileActions = new Set(['analyze', 'analyze_repository']);
 const assistantProfiles = [
   {
     id: 'self_heal',
     actions: new Set(['self_heal_repository']),
-    matcher: /(self[- ]?heal|repair|recover|hotfix)/i,
+    matcher: /(self[- ]?heal|repair plan|service recovery|recover from|hotfix)/i,
     instructions: 'Focus on root cause, smallest safe repair, rollback steps, and post-fix validation.'
   },
   {
     id: 'self_improve',
     actions: new Set(['self_improve_workflow']),
-    matcher: /(self[- ]?improv|improv|optimi[sz]e|streamline|refactor)/i,
+    matcher: /(self[- ]?improv|continuous improvement|optimi[sz]e|streamline|refactor)/i,
     instructions: 'Focus on durable improvements, measurable gains, safety checks, and follow-up automation.'
   },
   {
     id: 'debug',
     actions: new Set(['debug_failure']),
-    matcher: /(debug|failure|bug|error|incident|regression|broken)/i,
+    matcher: /(debug|troubleshoot|investigat(?:e|ion)|root cause|failing|failure|incident|regression)/i,
     instructions: 'Focus on reproducing the issue, isolating likely causes, risk-ranked fixes, and evidence to collect.'
   }
 ];
@@ -45,12 +44,6 @@ export function selectAssistantProfile(envelope) {
     if (profile.actions.has(envelope.requestedAction)) {
       return profile;
     }
-  }
-  if (!genericProfileActions.has(envelope.requestedAction)) {
-    return {
-      id: 'standard',
-      instructions: 'Focus on repository-safe analysis, explicit risks, and actionable next steps.'
-    };
   }
   const searchable = [envelope.task, envelope.category, envelope.requestedAction, ...envelope.goals].join(' ');
   for (const profile of assistantProfiles) {

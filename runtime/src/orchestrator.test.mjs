@@ -32,6 +32,12 @@ const selfImproveEnvelope = createEnvelope({
 });
 assert.equal(selectAssistantProfile(selfImproveEnvelope).id, 'self_improve');
 
+const matcherEnvelope = createEnvelope({
+  task: 'Investigate the failing deployment incident',
+  requestedAction: 'draft_issue'
+});
+assert.equal(selectAssistantProfile(matcherEnvelope).id, 'debug');
+
 const standardEnvelope = createEnvelope({
   task: 'Summarize changes after a bug fix',
   requestedAction: 'summarize_changes'
