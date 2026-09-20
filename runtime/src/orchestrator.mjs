@@ -22,13 +22,15 @@ const assistantProfiles = [
   }
 ];
 
-function normalizeRequestedAction(value) {
-  if (!value || value === 'analyze') return 'analyze_repository';
-  return value;
+function resolveRequestedAction(value) {
+  if (!value) return { requestedAction: 'analyze_repository', requestedActionSource: 'default' };
+  if (value === 'analyze') return { requestedAction: 'analyze_repository', requestedActionSource: 'legacy' };
+  return { requestedAction: value, requestedActionSource: 'explicit' };
 }
 
 export function createEnvelope(input) {
   if (!input || typeof input !== 'object' || !input.task) throw new Error('A task is required');
+  const { requestedAction, requestedActionSource } = resolveRequestedAction(input.requestedAction);
   return {
     id: input.id || crypto.randomUUID(),
     task: String(input.task),
@@ -39,7 +41,8 @@ export function createEnvelope(input) {
     goals: Array.isArray(input.goals) ? input.goals : [],
     constraints: Array.isArray(input.constraints) ? input.constraints : [],
     context: input.context && typeof input.context === 'object' ? input.context : {},
-    requestedAction: normalizeRequestedAction(input.requestedAction),
+    requestedAction,
+    requestedActionSource,
     createdAt: new Date().toISOString()
   };
 }
@@ -49,6 +52,12 @@ export function selectAssistantProfile(envelope) {
     if (profile.actions.has(envelope.requestedAction)) {
       return profile;
     }
+  }
+  if (envelope.requestedActionSource === 'explicit') {
+    return {
+      id: 'standard',
+      instructions: 'Focus on repository-safe analysis, explicit risks, and actionable next steps.'
+    };
   }
   const searchable = [
     envelope.task,

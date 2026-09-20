@@ -33,14 +33,12 @@ const selfImproveEnvelope = createEnvelope({
 assert.equal(selectAssistantProfile(selfImproveEnvelope).id, 'self_improve');
 
 const matcherEnvelope = createEnvelope({
-  task: 'Investigate the failing deployment incident',
-  requestedAction: 'draft_issue'
+  task: 'Investigate the failing deployment incident'
 });
 assert.equal(selectAssistantProfile(matcherEnvelope).id, 'debug');
 
 const diagnosticsEnvelope = createEnvelope({
   task: 'Prepare follow-up notes',
-  requestedAction: 'draft_issue',
   diagnostics: ['root cause investigation pending'],
   constraints: ['keep changes in dry run'],
   context: { note: 'service recovery checklist' }
@@ -57,11 +55,13 @@ const defaultEnvelope = createEnvelope({
   task: 'Analyze repository health'
 });
 assert.equal(defaultEnvelope.requestedAction, 'analyze_repository');
+assert.equal(defaultEnvelope.requestedActionSource, 'default');
 
 const legacyEnvelope = createEnvelope({
   task: 'Analyze repository health',
   requestedAction: 'analyze'
 });
 assert.equal(legacyEnvelope.requestedAction, 'analyze_repository');
+assert.equal(legacyEnvelope.requestedActionSource, 'legacy');
 
 console.log('Orchestrator assistant profile checks passed');
