@@ -18,6 +18,7 @@ from .improvement import ImprovementLoop
 from .problem_intake import Problem, SolvabilityEngine
 from .viability import ViabilityEngine
 from .prevention import PreventionLibrary
+from .outcomes import OutcomeEvidence
 
 
 def _emit(value: Any, as_json: bool) -> None:
@@ -95,6 +96,9 @@ def parser() -> argparse.ArgumentParser:
     controls = commands.add_parser("recommend-controls", help="Select sourced preventive controls")
     controls.add_argument("--domain", action="append", default=[])
     controls.add_argument("--json", action="store_true")
+    outcomes = commands.add_parser("rank-outcomes", help="Rank controls from observed outcome evidence")
+    outcomes.add_argument("path", help="Append-only JSONL outcome ledger")
+    outcomes.add_argument("--json", action="store_true")
     return root
 
 
@@ -160,6 +164,9 @@ def main(argv: list[str] | None = None) -> int:
             _emit(ViabilityEngine().assess(payload).as_dict(), args.json)
         elif args.command == "recommend-controls":
             _emit(PreventionLibrary().recommend(args.domain), args.json)
+        elif args.command == "rank-outcomes":
+            from pathlib import Path
+            _emit(OutcomeEvidence().evaluate(Path(args.path)), args.json)
         return 0
     except (ProviderError, WorkflowError, BundleError, IntakeError, ValueError) as exc:
         print(f"Jarvis error: {exc}", file=sys.stderr)
