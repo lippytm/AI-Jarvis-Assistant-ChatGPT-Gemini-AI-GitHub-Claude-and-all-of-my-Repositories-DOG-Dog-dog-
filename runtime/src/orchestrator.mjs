@@ -52,11 +52,11 @@ function serializeSearchValue(value) {
 
 function flattenSearchValues(value, path = []) {
   if (value === undefined || value === null) return [];
-  if (Array.isArray(value)) return value.flatMap(item => flattenSearchValues(item, path));
+  if (Array.isArray(value)) return value.flatMap(item => flattenSearchValues(item, [...path]));
   if (typeof value === 'object') {
     if (path.includes(value)) return ['[circular]'];
     const nextPath = [...path, value];
-    return Object.entries(value).flatMap(([key, nestedValue]) => [key, ...flattenSearchValues(nestedValue, nextPath)]);
+    return Object.entries(value).flatMap(([key, nestedValue]) => [key, ...flattenSearchValues(nestedValue, [...nextPath])]);
   }
   return [serializeSearchValue(value)];
 }
