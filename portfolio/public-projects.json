@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-09-20",
+  "publication_status": "draft-review-required",
+  "projects": [
+    {
+      "project_id": "ai-jarvis-assistant",
+      "name": "AI Jarvis Assistant in Swarms Systems",
+      "summary": "A governed assistant for coordinating bounded work across AI providers and repositories with evidence receipts, QA gates, and human approval.",
+      "status": "active-development",
+      "category": "AI orchestration and repository productivity",
+      "public_url": "https://github.com/lippytm/AI-Jarvis-Assistant-ChatGPT-Gemini-AI-GitHub-Claude-and-all-of-my-Repositories-DOG-Dog-dog-",
+      "proof_points": [
+        "Provider-neutral work-envelope contract",
+        "Receipt and artifact-hash verification",
+        "Deterministic safety and provenance tests",
+        "Transparent revenue-prioritization engine"
+      ],
+      "last_verified_at": "2026-09-20",
+      "next_milestone": "Complete a minimum-permission round trip and verify its receipt before calling any provider connection live.",
+      "disclosure": "Active research and development. No provider or repository connection is represented as verified until the documented round-trip test passes."
+    }
+  ],
+  "privacy": {
+    "private_repository_data_included": false,
+    "credentials_included": false,
+    "customer_data_included": false
+  }
+}
