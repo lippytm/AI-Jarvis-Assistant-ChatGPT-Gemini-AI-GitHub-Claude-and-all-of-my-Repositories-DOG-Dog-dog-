@@ -66,6 +66,7 @@ jarvis verify-bundle PATH [--json]
 jarvis doctor [--json]
 jarvis intake gemini-ai-jarvis PATH [--title TITLE] [--json]
 jarvis intakes [--json]
+jarvis patrol [--owner lippytm] [--json]
 ```
 
 ## Automated workflows
@@ -95,6 +96,11 @@ workstation to reject tampering or incomplete transfers. See [`docs/ROUND_TRIP.m
 credential-free audit that validates workflows, compiles the package, runs tests, and stores
 the reports for 30 days. See the [capability matrix](docs/CAPABILITIES.md) and
 [threat model](docs/THREAT_MODEL.md).
+
+The always-on layer runs a bounded, read-only repository patrol every day after this
+branch is merged into the default branch. It records health findings and improvement
+proposals as artifacts, with circuit breakers and approval required for every repository
+change. See [always-on operations](docs/ALWAYS_ON.md).
 
 The intake bridge captures UTF-8 Markdown, text, or JSON exported from Gemini Jarvis, Claude,
 or another workstation. It records provenance, detects common credentials, stores a redacted
