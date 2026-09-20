@@ -27,13 +27,13 @@ function resolveRequestedAction(value) {
   const trimmedValue = typeof value === 'string' ? value.trim() : value;
   const normalizedValue = canonicalizeQuickActionId(trimmedValue);
   if (trimmedValue === undefined || trimmedValue === null) {
-    return { requestedAction: 'analyze', canonicalRequestedAction: 'analyze_repository', requestedActionSource: 'default' };
+    return { canonicalRequestedAction: 'analyze_repository', requestedActionSource: 'default' };
   }
   if (trimmedValue === '') {
-    return { requestedAction: 'analyze', canonicalRequestedAction: 'analyze_repository', requestedActionSource: 'default' };
+    return { canonicalRequestedAction: 'analyze_repository', requestedActionSource: 'default' };
   }
-  if (trimmedValue === 'analyze') return { requestedAction: 'analyze', canonicalRequestedAction: 'analyze_repository', requestedActionSource: 'legacy' };
-  return { requestedAction: normalizedValue, canonicalRequestedAction: normalizedValue, requestedActionSource: 'explicit' };
+  if (trimmedValue === 'analyze') return { canonicalRequestedAction: 'analyze_repository', requestedActionSource: 'legacy' };
+  return { canonicalRequestedAction: normalizedValue, requestedActionSource: 'explicit' };
 }
 
 function serializeSearchValue(value) {
@@ -75,8 +75,8 @@ function safeStringify(value) {
 
 export function createEnvelope(input) {
   if (!input || typeof input !== 'object' || !input.task) throw new Error('A task is required');
-  const { requestedAction, canonicalRequestedAction, requestedActionSource } = resolveRequestedAction(input.requestedAction);
   const originalRequestedAction = Object.hasOwn(input, 'requestedAction') ? input.requestedAction : null;
+  const { canonicalRequestedAction, requestedActionSource } = resolveRequestedAction(input.requestedAction);
   return {
     id: input.id || crypto.randomUUID(),
     task: String(input.task),
@@ -88,7 +88,7 @@ export function createEnvelope(input) {
     constraints: Array.isArray(input.constraints) ? input.constraints : [],
     context: input.context && typeof input.context === 'object' ? input.context : {},
     originalRequestedAction,
-    requestedAction,
+    requestedAction: originalRequestedAction ?? 'analyze',
     canonicalRequestedAction,
     requestedActionSource,
     createdAt: new Date().toISOString()

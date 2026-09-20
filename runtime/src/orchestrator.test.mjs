@@ -111,7 +111,7 @@ const emptyActionEnvelope = createEnvelope({
   requestedAction: ''
 });
 assert.equal(emptyActionEnvelope.originalRequestedAction, '');
-assert.equal(emptyActionEnvelope.requestedAction, 'analyze');
+assert.equal(emptyActionEnvelope.requestedAction, '');
 assert.equal(emptyActionEnvelope.canonicalRequestedAction, 'analyze_repository');
 assert.equal(emptyActionEnvelope.requestedActionSource, 'default');
 
@@ -127,7 +127,7 @@ const paddedLegacyEnvelope = createEnvelope({
   task: 'Analyze repository health',
   requestedAction: ' analyze '
 });
-assert.equal(paddedLegacyEnvelope.requestedAction, 'analyze');
+assert.equal(paddedLegacyEnvelope.requestedAction, ' analyze ');
 assert.equal(paddedLegacyEnvelope.canonicalRequestedAction, 'analyze_repository');
 assert.equal(paddedLegacyEnvelope.requestedActionSource, 'legacy');
 
