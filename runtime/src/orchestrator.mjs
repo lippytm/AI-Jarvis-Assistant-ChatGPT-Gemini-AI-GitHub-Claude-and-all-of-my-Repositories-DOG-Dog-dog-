@@ -56,6 +56,16 @@ function flattenSearchValues(value, seen = new WeakSet()) {
   return [serializeSearchValue(value)];
 }
 
+function safeStringify(value) {
+  const seen = new WeakSet();
+  return JSON.stringify(value, (key, nestedValue) => {
+    if (!nestedValue || typeof nestedValue !== 'object') return nestedValue;
+    if (seen.has(nestedValue)) return '[circular]';
+    seen.add(nestedValue);
+    return nestedValue;
+  }, 2);
+}
+
 export function createEnvelope(input) {
   if (!input || typeof input !== 'object' || !input.task) throw new Error('A task is required');
   const { requestedAction, canonicalRequestedAction, requestedActionSource } = resolveRequestedAction(input.requestedAction);
@@ -113,7 +123,7 @@ Assistant profile: ${profile.id}
 Profile instructions: ${profile.instructions}
 
 Task envelope:
-${JSON.stringify(envelope, null, 2)}`;
+${safeStringify(envelope)}`;
 }
 
 export async function orchestrate(input, env = process.env) {

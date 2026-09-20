@@ -66,6 +66,7 @@ const circularEnvelope = createEnvelope({
   context: circularContext
 });
 assert.equal(selectAssistantProfile(circularEnvelope).id, 'debug');
+assert.match(buildPrompt(circularEnvelope), /\[circular\]/);
 
 const standardEnvelope = createEnvelope({
   task: 'Summarize changes after a bug fix',
