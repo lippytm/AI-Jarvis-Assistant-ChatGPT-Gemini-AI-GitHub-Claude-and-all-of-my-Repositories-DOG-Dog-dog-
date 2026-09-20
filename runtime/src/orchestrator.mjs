@@ -22,6 +22,11 @@ const assistantProfiles = [
   }
 ];
 
+function normalizeRequestedAction(value) {
+  if (!value || value === 'analyze') return 'analyze_repository';
+  return value;
+}
+
 export function createEnvelope(input) {
   if (!input || typeof input !== 'object' || !input.task) throw new Error('A task is required');
   return {
@@ -34,7 +39,7 @@ export function createEnvelope(input) {
     goals: Array.isArray(input.goals) ? input.goals : [],
     constraints: Array.isArray(input.constraints) ? input.constraints : [],
     context: input.context && typeof input.context === 'object' ? input.context : {},
-    requestedAction: input.requestedAction || 'analyze_repository',
+    requestedAction: normalizeRequestedAction(input.requestedAction),
     createdAt: new Date().toISOString()
   };
 }
