@@ -53,6 +53,12 @@ const nestedContextEnvelope = createEnvelope({
 });
 assert.equal(selectAssistantProfile(nestedContextEnvelope).id, 'self_heal');
 
+const nestedKeyEnvelope = createEnvelope({
+  task: 'Prepare follow-up notes',
+  context: { service: { recovery: { stage: 'pending' } } }
+});
+assert.equal(selectAssistantProfile(nestedKeyEnvelope).id, 'self_heal');
+
 const standardEnvelope = createEnvelope({
   task: 'Summarize changes after a bug fix',
   requestedAction: 'summarize_changes'

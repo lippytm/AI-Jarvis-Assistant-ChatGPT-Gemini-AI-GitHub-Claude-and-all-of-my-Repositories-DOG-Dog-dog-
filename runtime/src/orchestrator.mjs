@@ -39,6 +39,15 @@ function serializeSearchValue(value) {
   return String(value);
 }
 
+function flattenSearchValues(value) {
+  if (value === undefined || value === null) return [];
+  if (Array.isArray(value)) return value.flatMap(item => flattenSearchValues(item));
+  if (typeof value === 'object') {
+    return Object.entries(value).flatMap(([key, nestedValue]) => [key, ...flattenSearchValues(nestedValue)]);
+  }
+  return [serializeSearchValue(value)];
+}
+
 export function createEnvelope(input) {
   if (!input || typeof input !== 'object' || !input.task) throw new Error('A task is required');
   const { requestedAction, canonicalRequestedAction, requestedActionSource } = resolveRequestedAction(input.requestedAction);
@@ -76,7 +85,7 @@ export function selectAssistantProfile(envelope) {
     ...envelope.goals,
     ...envelope.diagnostics,
     ...envelope.constraints,
-    ...Object.values(envelope.context).map(serializeSearchValue)
+    ...flattenSearchValues(envelope.context)
   ].map(serializeSearchValue).join(' ');
   for (const profile of assistantProfiles) {
     if (profile.matcher.test(searchable)) {
