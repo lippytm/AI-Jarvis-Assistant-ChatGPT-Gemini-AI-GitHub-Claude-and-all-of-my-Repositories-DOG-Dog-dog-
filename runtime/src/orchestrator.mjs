@@ -35,15 +35,23 @@ function resolveRequestedAction(value) {
 function serializeSearchValue(value) {
   if (value === undefined || value === null) return '';
   if (typeof value === 'string') return value;
-  if (typeof value === 'object') return JSON.stringify(value);
+  if (typeof value === 'object') {
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return '[object]';
+    }
+  }
   return String(value);
 }
 
-function flattenSearchValues(value) {
+function flattenSearchValues(value, seen = new WeakSet()) {
   if (value === undefined || value === null) return [];
-  if (Array.isArray(value)) return value.flatMap(item => flattenSearchValues(item));
+  if (Array.isArray(value)) return value.flatMap(item => flattenSearchValues(item, seen));
   if (typeof value === 'object') {
-    return Object.entries(value).flatMap(([key, nestedValue]) => [key, ...flattenSearchValues(nestedValue)]);
+    if (seen.has(value)) return ['[circular]'];
+    seen.add(value);
+    return Object.entries(value).flatMap(([key, nestedValue]) => [key, ...flattenSearchValues(nestedValue, seen)]);
   }
   return [serializeSearchValue(value)];
 }

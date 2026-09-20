@@ -59,6 +59,14 @@ const nestedKeyEnvelope = createEnvelope({
 });
 assert.equal(selectAssistantProfile(nestedKeyEnvelope).id, 'self_heal');
 
+const circularContext = {};
+circularContext.self = circularContext;
+const circularEnvelope = createEnvelope({
+  task: 'Debug service incident',
+  context: circularContext
+});
+assert.equal(selectAssistantProfile(circularEnvelope).id, 'debug');
+
 const standardEnvelope = createEnvelope({
   task: 'Summarize changes after a bug fix',
   requestedAction: 'summarize_changes'
