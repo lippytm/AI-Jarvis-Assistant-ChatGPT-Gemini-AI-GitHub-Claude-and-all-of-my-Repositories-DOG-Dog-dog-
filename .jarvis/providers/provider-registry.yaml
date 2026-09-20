@@ -1,0 +1,70 @@
+schema_version: "1.0.0"
+engine: AI Jarvis Coding and Diagnostic Engine
+status: proposed-unverified
+owner: Charles Earl Lipshay
+
+providers:
+  - id: openai-codex
+    kind: coding-agent
+    status: available-for-controlled-pilot
+    instruction_surface: AGENTS.md
+    capabilities: [plan, implement, test, diagnose, review, patch]
+  - id: github-copilot
+    kind: coding-agent
+    status: available-for-controlled-pilot
+    instruction_surface: .github/copilot-instructions.md
+    capabilities: [plan, implement, test, document, prepare_pull_request]
+  - id: anthropic-claude
+    kind: external-model-reviewer
+    status: unverified
+    capabilities: [review, alternate_hypothesis, red_team]
+  - id: google-gemini
+    kind: external-model-reviewer
+    status: unverified
+    capabilities: [research, multimodal_review, alternate_hypothesis]
+  - id: local-toolchain
+    kind: deterministic-verifier
+    status: repository-dependent
+    capabilities: [compile, test, lint, typecheck, format_check]
+  - id: ci
+    kind: deterministic-verifier
+    status: repository-dependent
+    capabilities: [clean_environment_test, artifact_build, policy_check]
+  - id: security-toolchain
+    kind: deterministic-verifier
+    status: repository-dependent
+    capabilities: [secret_scan, dependency_audit, static_analysis, threat_review]
+  - id: runtime-observability
+    kind: diagnostic-evidence
+    status: repository-dependent
+    capabilities: [logs, traces, metrics, health_checks]
+
+routing:
+  implementation:
+    primary: [openai-codex, github-copilot]
+    require_deterministic_verification: true
+  diagnosis:
+    primary: [openai-codex, local-toolchain, runtime-observability]
+    optional_independent_review: [github-copilot, anthropic-claude, google-gemini]
+  security:
+    primary: [security-toolchain]
+    optional_review: [openai-codex, github-copilot]
+    human_approval_required_for_changes: true
+
+consensus_policy:
+  model_votes_are_not_proof: true
+  deterministic_evidence_precedes_model_opinion: true
+  unresolved_disagreement_status: needs-human-review
+  require_reproduction_before_fix: true
+  require_regression_test_when_practical: true
+
+prohibited_without_owner_approval:
+  - merge
+  - deploy
+  - publish
+  - spend
+  - external_message
+  - credential_access
+  - security_control_change
+  - destructive_change
+  - private_data_disclosure
