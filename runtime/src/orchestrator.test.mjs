@@ -38,6 +38,15 @@ const matcherEnvelope = createEnvelope({
 });
 assert.equal(selectAssistantProfile(matcherEnvelope).id, 'debug');
 
+const diagnosticsEnvelope = createEnvelope({
+  task: 'Prepare follow-up notes',
+  requestedAction: 'draft_issue',
+  diagnostics: ['root cause investigation pending'],
+  constraints: ['keep changes in dry run'],
+  context: { note: 'service recovery checklist' }
+});
+assert.equal(selectAssistantProfile(diagnosticsEnvelope).id, 'self_heal');
+
 const standardEnvelope = createEnvelope({
   task: 'Summarize changes after a bug fix',
   requestedAction: 'summarize_changes'

@@ -45,7 +45,15 @@ export function selectAssistantProfile(envelope) {
       return profile;
     }
   }
-  const searchable = [envelope.task, envelope.category, envelope.requestedAction, ...envelope.goals].join(' ');
+  const searchable = [
+    envelope.task,
+    envelope.category,
+    envelope.requestedAction,
+    ...envelope.goals,
+    ...envelope.diagnostics,
+    ...envelope.constraints,
+    ...Object.values(envelope.context).map(value => String(value))
+  ].join(' ');
   for (const profile of assistantProfiles) {
     if (profile.matcher.test(searchable)) {
       return profile;
