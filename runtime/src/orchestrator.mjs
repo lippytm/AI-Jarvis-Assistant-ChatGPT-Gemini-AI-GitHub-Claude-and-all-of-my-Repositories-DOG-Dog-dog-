@@ -62,15 +62,19 @@ function flattenSearchValues(value, path = []) {
 }
 
 function safeStringify(value) {
-  const path = [];
-  return JSON.stringify(value, function stringifyReplacer(key, nestedValue) {
+  const sanitize = (nestedValue, path = []) => {
     if (typeof nestedValue === 'bigint') return nestedValue.toString();
     if (!nestedValue || typeof nestedValue !== 'object') return nestedValue;
-    while (path.length && path[path.length - 1] !== this) path.pop();
     if (path.includes(nestedValue)) return '[circular]';
-    path.push(nestedValue);
-    return nestedValue;
-  }, 2);
+    const nextPath = [...path, nestedValue];
+    if (Array.isArray(nestedValue)) {
+      return nestedValue.map(item => sanitize(item, nextPath));
+    }
+    return Object.fromEntries(
+      Object.entries(nestedValue).map(([key, childValue]) => [key, sanitize(childValue, nextPath)])
+    );
+  };
+  return JSON.stringify(sanitize(value), null, 2);
 }
 
 export function createEnvelope(input) {
