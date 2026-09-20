@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { buildPrompt, createEnvelope, selectAssistantProfile } from './orchestrator.mjs';
+import { buildPrompt, createEnvelope, orchestrate, selectAssistantProfile } from './orchestrator.mjs';
 
 const debugEnvelope = createEnvelope({
   task: 'Debug the latest production error',
@@ -120,6 +120,7 @@ const falseActionEnvelope = createEnvelope({
 });
 assert.equal(falseActionEnvelope.requestedAction, false);
 assert.equal(falseActionEnvelope.requestedActionSource, 'explicit');
+await assert.rejects(() => orchestrate({ task: 'Analyze repository health', requestedAction: false }, {}), /Unknown Quick Action/);
 
 const paddedLegacyEnvelope = createEnvelope({
   task: 'Analyze repository health',

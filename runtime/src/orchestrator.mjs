@@ -1,4 +1,4 @@
-import { canonicalizeQuickActionId } from './quick-actions.mjs';
+import { canonicalizeQuickActionId, getQuickAction } from './quick-actions.mjs';
 import { askClaude, askGemini, askOpenAI, configuredProviders } from './providers.mjs';
 
 const approvalRequired = new Set(['deploy', 'merge', 'delete', 'external_message', 'secret_change', 'financial_commitment']);
@@ -133,6 +133,7 @@ ${safeStringify(envelope)}`;
 
 export async function orchestrate(input, env = process.env) {
   const envelope = createEnvelope(input);
+  getQuickAction(envelope.canonicalRequestedAction || envelope.requestedAction);
   const available = configuredProviders(env);
   const assistantProfile = selectAssistantProfile(envelope);
   const prompt = buildPrompt(envelope, assistantProfile);
