@@ -79,6 +79,7 @@ drafts in `data/outbox`; they do not silently post, publish, or message anyone.
 - `multi_ai_business_review`: Perplexity research → Gemini Jarvis design → Claude review → ChatGPT synthesis → ChatGPT Business draft handoff.
 - `repository_fleet_review`: GitHub inventory of accessible repositories → ChatGPT portfolio review → GitHub draft handoff.
 - `prompt_11_product_factory`: market research → product genome → independent QA challenge → master build → owner approval → Business handoff.
+- `jarvis_problem_council`: evidence research → scenarios → adversarial review → synthesis → blind-spot challenge → verification → owner approval.
 
 Identical workflow inputs reuse their prior completed report so retries do not accidentally
 repeat paid calls. Supply `--force` only when a deliberate fresh run is required. Approval
@@ -101,7 +102,7 @@ the reports for 30 days. See the [capability matrix](docs/CAPABILITIES.md) and
 The always-on layer runs a bounded, read-only repository patrol every day after this
 branch is merged into the default branch. It records health findings and improvement
 proposals as artifacts, with circuit breakers and approval required for every repository
-change. See [always-on operations](docs/ALWAYS_ON.md) and the [continuous improvement contract](docs/CONTINUOUS_IMPROVEMENT.md).
+change. See [always-on operations](docs/ALWAYS_ON.md), the [continuous improvement contract](docs/CONTINUOUS_IMPROVEMENT.md), and the [Problem Council](docs/PROBLEM_COUNCIL.md).
 
 The intake bridge captures UTF-8 Markdown, text, or JSON exported from Gemini Jarvis, Claude,
 or another workstation. It records provenance, detects common credentials, stores a redacted
