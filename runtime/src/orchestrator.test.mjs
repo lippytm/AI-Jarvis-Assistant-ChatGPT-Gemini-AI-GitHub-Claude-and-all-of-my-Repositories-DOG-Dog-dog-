@@ -33,7 +33,7 @@ const selfImproveEnvelope = createEnvelope({
 assert.equal(selectAssistantProfile(selfImproveEnvelope).id, 'self_improve');
 
 const standardEnvelope = createEnvelope({
-  task: 'Summarize changes',
+  task: 'Summarize changes after a bug fix',
   requestedAction: 'summarize_changes'
 });
 assert.equal(selectAssistantProfile(standardEnvelope).id, 'standard');

@@ -1,6 +1,7 @@
 import { askClaude, askGemini, askOpenAI, configuredProviders } from './providers.mjs';
 
 const approvalRequired = new Set(['deploy', 'merge', 'delete', 'external_message', 'secret_change', 'financial_commitment']);
+const genericProfileActions = new Set(['analyze', 'analyze_repository']);
 const assistantProfiles = [
   {
     id: 'self_heal',
@@ -40,9 +41,20 @@ export function createEnvelope(input) {
 }
 
 export function selectAssistantProfile(envelope) {
+  for (const profile of assistantProfiles) {
+    if (profile.actions.has(envelope.requestedAction)) {
+      return profile;
+    }
+  }
+  if (!genericProfileActions.has(envelope.requestedAction)) {
+    return {
+      id: 'standard',
+      instructions: 'Focus on repository-safe analysis, explicit risks, and actionable next steps.'
+    };
+  }
   const searchable = [envelope.task, envelope.category, envelope.requestedAction, ...envelope.goals].join(' ');
   for (const profile of assistantProfiles) {
-    if (profile.actions.has(envelope.requestedAction) || profile.matcher.test(searchable)) {
+    if (profile.matcher.test(searchable)) {
       return profile;
     }
   }
