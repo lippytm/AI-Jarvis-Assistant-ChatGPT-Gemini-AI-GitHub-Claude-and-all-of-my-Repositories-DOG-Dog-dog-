@@ -68,6 +68,7 @@ jarvis intake gemini-ai-jarvis PATH [--title TITLE] [--json]
 jarvis intakes [--json]
 jarvis patrol [--owner lippytm] [--json]
 jarvis improve data/patrol/latest.json [--json]
+jarvis assess-problem problem.json [--json]
 ```
 
 ## Automated workflows
@@ -102,7 +103,7 @@ the reports for 30 days. See the [capability matrix](docs/CAPABILITIES.md) and
 The always-on layer runs a bounded, read-only repository patrol every day after this
 branch is merged into the default branch. It records health findings and improvement
 proposals as artifacts, with circuit breakers and approval required for every repository
-change. See [always-on operations](docs/ALWAYS_ON.md), the [continuous improvement contract](docs/CONTINUOUS_IMPROVEMENT.md), and the [Problem Council](docs/PROBLEM_COUNCIL.md).
+change. See [always-on operations](docs/ALWAYS_ON.md), the [continuous improvement contract](docs/CONTINUOUS_IMPROVEMENT.md), the [Problem Council](docs/PROBLEM_COUNCIL.md), and [universal problem intake](docs/PROBLEM_INTAKE.md).
 
 The intake bridge captures UTF-8 Markdown, text, or JSON exported from Gemini Jarvis, Claude,
 or another workstation. It records provenance, detects common credentials, stores a redacted
