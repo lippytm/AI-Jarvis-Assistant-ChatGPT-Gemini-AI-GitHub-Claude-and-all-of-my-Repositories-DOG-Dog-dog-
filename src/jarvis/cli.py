@@ -17,6 +17,7 @@ from .patrol import Patrol
 from .improvement import ImprovementLoop
 from .problem_intake import Problem, SolvabilityEngine
 from .viability import ViabilityEngine
+from .prevention import PreventionLibrary
 
 
 def _emit(value: Any, as_json: bool) -> None:
@@ -91,6 +92,9 @@ def parser() -> argparse.ArgumentParser:
     viability = commands.add_parser("assess-viability", help="Run preventive design and conflict gates")
     viability.add_argument("path", help="Viability design JSON")
     viability.add_argument("--json", action="store_true")
+    controls = commands.add_parser("recommend-controls", help="Select sourced preventive controls")
+    controls.add_argument("--domain", action="append", default=[])
+    controls.add_argument("--json", action="store_true")
     return root
 
 
@@ -154,6 +158,8 @@ def main(argv: list[str] | None = None) -> int:
             from pathlib import Path
             payload = json.loads(Path(args.path).read_text(encoding="utf-8"))
             _emit(ViabilityEngine().assess(payload).as_dict(), args.json)
+        elif args.command == "recommend-controls":
+            _emit(PreventionLibrary().recommend(args.domain), args.json)
         return 0
     except (ProviderError, WorkflowError, BundleError, IntakeError, ValueError) as exc:
         print(f"Jarvis error: {exc}", file=sys.stderr)
