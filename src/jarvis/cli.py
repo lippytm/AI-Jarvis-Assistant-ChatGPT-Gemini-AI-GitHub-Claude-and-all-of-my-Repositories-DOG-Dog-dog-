@@ -14,6 +14,7 @@ from .bundles import BundleError, RunBundler
 from .doctor import Doctor
 from .intake import IntakeBridge, IntakeError
 from .patrol import Patrol
+from .improvement import ImprovementLoop
 
 
 def _emit(value: Any, as_json: bool) -> None:
@@ -79,6 +80,9 @@ def parser() -> argparse.ArgumentParser:
     patrol = commands.add_parser("patrol", help="Run a bounded read-only repository patrol")
     patrol.add_argument("--owner", default=None)
     patrol.add_argument("--json", action="store_true")
+    improve = commands.add_parser("improve", help="Turn diagnostic evidence into reviewable experiments")
+    improve.add_argument("path", help="JSON patrol or observation report")
+    improve.add_argument("--json", action="store_true")
     return root
 
 
@@ -131,6 +135,9 @@ def main(argv: list[str] | None = None) -> int:
             _emit(IntakeBridge().list(), args.json)
         elif args.command == "patrol":
             _emit(Patrol().run(args.owner), args.json)
+        elif args.command == "improve":
+            from pathlib import Path
+            _emit(ImprovementLoop().run(Path(args.path)), args.json)
         return 0
     except (ProviderError, WorkflowError, BundleError, IntakeError, ValueError) as exc:
         print(f"Jarvis error: {exc}", file=sys.stderr)
