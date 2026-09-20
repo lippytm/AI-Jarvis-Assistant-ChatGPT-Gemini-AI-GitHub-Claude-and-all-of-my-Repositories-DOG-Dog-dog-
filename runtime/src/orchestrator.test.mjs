@@ -47,6 +47,12 @@ const diagnosticsEnvelope = createEnvelope({
 });
 assert.equal(selectAssistantProfile(diagnosticsEnvelope).id, 'self_heal');
 
+const nestedContextEnvelope = createEnvelope({
+  task: 'Prepare follow-up notes',
+  context: { incident: { summary: 'service recovery in progress' } }
+});
+assert.equal(selectAssistantProfile(nestedContextEnvelope).id, 'self_heal');
+
 const standardEnvelope = createEnvelope({
   task: 'Summarize changes after a bug fix',
   requestedAction: 'summarize_changes'

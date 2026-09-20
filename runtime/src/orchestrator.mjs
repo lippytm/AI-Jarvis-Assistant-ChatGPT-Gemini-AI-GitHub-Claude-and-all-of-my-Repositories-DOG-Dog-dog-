@@ -32,6 +32,13 @@ function resolveRequestedAction(value) {
   return { requestedAction: normalizedValue, canonicalRequestedAction: normalizedValue, requestedActionSource: 'explicit' };
 }
 
+function serializeSearchValue(value) {
+  if (value === undefined || value === null) return '';
+  if (typeof value === 'string') return value;
+  if (typeof value === 'object') return JSON.stringify(value);
+  return String(value);
+}
+
 export function createEnvelope(input) {
   if (!input || typeof input !== 'object' || !input.task) throw new Error('A task is required');
   const { requestedAction, canonicalRequestedAction, requestedActionSource } = resolveRequestedAction(input.requestedAction);
@@ -69,8 +76,8 @@ export function selectAssistantProfile(envelope) {
     ...envelope.goals,
     ...envelope.diagnostics,
     ...envelope.constraints,
-    ...Object.values(envelope.context).map(value => String(value))
-  ].join(' ');
+    ...Object.values(envelope.context).map(serializeSearchValue)
+  ].map(serializeSearchValue).join(' ');
   for (const profile of assistantProfiles) {
     if (profile.matcher.test(searchable)) {
       return profile;
