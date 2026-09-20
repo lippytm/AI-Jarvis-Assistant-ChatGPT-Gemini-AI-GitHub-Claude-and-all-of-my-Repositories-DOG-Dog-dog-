@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "start": "node src/server.mjs",
-    "check": "node --check src/server.mjs && node --check src/orchestrator.mjs && node --check src/providers.mjs && node --check src/quick-actions.mjs && node --check src/quick-actions-runner.mjs && node --check src/orchestrator.test.mjs",
+    "check": "node --check src/server.mjs && node --check src/orchestrator.mjs && node --check src/providers.mjs && node --check src/quick-actions.mjs && node --check src/quick-actions-runner.mjs",
     "test": "node src/quick-actions.test.mjs && node src/orchestrator.test.mjs"
   }
 }
