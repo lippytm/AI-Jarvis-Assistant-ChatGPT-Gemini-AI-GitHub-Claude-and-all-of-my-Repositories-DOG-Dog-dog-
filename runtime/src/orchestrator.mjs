@@ -37,6 +37,7 @@ function resolveRequestedAction(value) {
 function serializeSearchValue(value) {
   if (value === undefined || value === null) return '';
   if (typeof value === 'string') return value;
+  if (typeof value === 'bigint') return value.toString();
   if (typeof value === 'object') {
     try {
       return JSON.stringify(value);
@@ -61,6 +62,7 @@ function flattenSearchValues(value, seen = new WeakSet()) {
 function safeStringify(value) {
   const seen = new WeakSet();
   return JSON.stringify(value, (key, nestedValue) => {
+    if (typeof nestedValue === 'bigint') return nestedValue.toString();
     if (!nestedValue || typeof nestedValue !== 'object') return nestedValue;
     if (seen.has(nestedValue)) return '[circular]';
     seen.add(nestedValue);

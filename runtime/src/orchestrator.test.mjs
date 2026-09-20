@@ -68,6 +68,12 @@ const circularEnvelope = createEnvelope({
 assert.equal(selectAssistantProfile(circularEnvelope).id, 'debug');
 assert.match(buildPrompt(circularEnvelope), /\[circular\]/);
 
+const bigintEnvelope = createEnvelope({
+  task: 'Analyze repository health',
+  context: { buildNumber: 42n }
+});
+assert.match(buildPrompt(bigintEnvelope), /"42"/);
+
 const standardEnvelope = createEnvelope({
   task: 'Summarize changes after a bug fix',
   requestedAction: 'summarize_changes'
