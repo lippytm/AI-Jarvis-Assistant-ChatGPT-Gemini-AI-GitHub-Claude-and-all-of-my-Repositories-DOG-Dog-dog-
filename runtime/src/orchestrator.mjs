@@ -24,13 +24,13 @@ const assistantProfiles = [
 ];
 
 function resolveRequestedAction(value) {
-  const rawValue = typeof value === 'string' ? value.trim() : value;
-  const normalizedValue = canonicalizeQuickActionId(value);
-  if (rawValue === undefined || rawValue === null) {
+  const trimmedValue = typeof value === 'string' ? value.trim() : value;
+  const normalizedValue = canonicalizeQuickActionId(trimmedValue);
+  if (trimmedValue === undefined || trimmedValue === null) {
     return { requestedAction: 'analyze', canonicalRequestedAction: 'analyze_repository', requestedActionSource: 'default' };
   }
-  if (rawValue === '') return { requestedAction: 'analyze', canonicalRequestedAction: 'analyze_repository', requestedActionSource: 'default' };
-  if (rawValue === 'analyze') return { requestedAction: 'analyze', canonicalRequestedAction: 'analyze_repository', requestedActionSource: 'legacy' };
+  if (trimmedValue === '') return { requestedAction: 'analyze', canonicalRequestedAction: 'analyze_repository', requestedActionSource: 'default' };
+  if (trimmedValue === 'analyze') return { requestedAction: 'analyze', canonicalRequestedAction: 'analyze_repository', requestedActionSource: 'legacy' };
   return { requestedAction: normalizedValue, canonicalRequestedAction: normalizedValue, requestedActionSource: 'explicit' };
 }
 
