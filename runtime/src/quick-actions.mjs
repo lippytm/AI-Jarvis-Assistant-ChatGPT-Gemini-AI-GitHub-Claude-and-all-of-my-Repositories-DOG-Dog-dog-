@@ -1,6 +1,9 @@
 export const QUICK_ACTIONS = Object.freeze([
   { id: 'analyze_repository', label: 'Analyze repository', risk: 'low', mode: 'autonomous', capability: 'read_and_analyze' },
   { id: 'summarize_changes', label: 'Summarize changes', risk: 'low', mode: 'autonomous', capability: 'read_and_analyze' },
+  { id: 'debug_failure', label: 'Debug a failure', risk: 'low', mode: 'autonomous', capability: 'read_and_analyze' },
+  { id: 'self_heal_repository', label: 'Plan a self-healing repair', risk: 'medium', mode: 'autonomous', capability: 'create_draft' },
+  { id: 'self_improve_workflow', label: 'Plan a self-improving update', risk: 'medium', mode: 'autonomous', capability: 'create_draft' },
   { id: 'run_tests', label: 'Run tests', risk: 'low', mode: 'autonomous', capability: 'test' },
   { id: 'sync_knowledge', label: 'Sync approved knowledge', risk: 'low', mode: 'autonomous', capability: 'write_versioned_knowledge' },
   { id: 'draft_issue', label: 'Draft an issue', risk: 'low', mode: 'autonomous', capability: 'create_draft' },
