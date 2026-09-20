@@ -41,6 +41,7 @@ export function createEnvelope(input) {
     goals: Array.isArray(input.goals) ? input.goals : [],
     constraints: Array.isArray(input.constraints) ? input.constraints : [],
     context: input.context && typeof input.context === 'object' ? input.context : {},
+    originalRequestedAction: input.requestedAction || null,
     requestedAction,
     requestedActionSource,
     createdAt: new Date().toISOString()
@@ -88,6 +89,7 @@ export async function orchestrate(input, env = process.env) {
   const available = configuredProviders(env);
   const assistantProfile = selectAssistantProfile(envelope);
   const prompt = buildPrompt(envelope, assistantProfile);
+  const approvalActions = [envelope.requestedAction, envelope.originalRequestedAction].filter(Boolean);
   const results = {};
   const calls = [];
   if (available.openai) calls.push(askOpenAI(prompt, env).then(value => { results.openai = value; }));
@@ -100,7 +102,7 @@ export async function orchestrate(input, env = process.env) {
     assistantProfile: assistantProfile.id,
     providersUsed: Object.keys(results),
     results,
-    status: approvalRequired.has(envelope.requestedAction) ? 'approval_required' : 'draft_ready',
+    status: approvalActions.some(action => approvalRequired.has(action)) ? 'approval_required' : 'draft_ready',
     execute: false
   };
 }
