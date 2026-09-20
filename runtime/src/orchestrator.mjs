@@ -31,6 +31,7 @@ function resolveRequestedAction(value) {
 export function createEnvelope(input) {
   if (!input || typeof input !== 'object' || !input.task) throw new Error('A task is required');
   const { requestedAction, requestedActionSource } = resolveRequestedAction(input.requestedAction);
+  const originalRequestedAction = Object.hasOwn(input, 'requestedAction') ? input.requestedAction : null;
   return {
     id: input.id || crypto.randomUUID(),
     task: String(input.task),
@@ -41,7 +42,7 @@ export function createEnvelope(input) {
     goals: Array.isArray(input.goals) ? input.goals : [],
     constraints: Array.isArray(input.constraints) ? input.constraints : [],
     context: input.context && typeof input.context === 'object' ? input.context : {},
-    originalRequestedAction: input.requestedAction || null,
+    originalRequestedAction,
     requestedAction,
     requestedActionSource,
     createdAt: new Date().toISOString()

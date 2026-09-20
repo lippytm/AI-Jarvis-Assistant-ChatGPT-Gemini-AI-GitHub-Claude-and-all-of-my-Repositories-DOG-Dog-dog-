@@ -67,4 +67,10 @@ assert.equal(legacyEnvelope.requestedAction, 'analyze_repository');
 assert.equal(legacyEnvelope.requestedActionSource, 'legacy');
 assert.equal(legacyEnvelope.originalRequestedAction, 'analyze');
 
+const emptyActionEnvelope = createEnvelope({
+  task: 'Analyze repository health',
+  requestedAction: ''
+});
+assert.equal(emptyActionEnvelope.originalRequestedAction, '');
+
 console.log('Orchestrator assistant profile checks passed');
