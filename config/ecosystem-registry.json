@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0",
+  "systems": [
+    {"id": "github", "mode": "observe", "sensitivity": "internal", "writes_require_approval": true},
+    {"id": "hostinger-websites", "mode": "planned", "sensitivity": "internal", "writes_require_approval": true},
+    {"id": "prompt-11-factory", "mode": "planned", "sensitivity": "internal", "writes_require_approval": true},
+    {"id": "publishing", "mode": "planned", "sensitivity": "internal", "writes_require_approval": true},
+    {"id": "crm-membership-affiliate", "mode": "planned", "sensitivity": "confidential", "writes_require_approval": true},
+    {"id": "linux-dev-environments", "mode": "planned", "sensitivity": "confidential", "writes_require_approval": true},
+    {"id": "personal-life-support", "mode": "advisory_only", "sensitivity": "restricted", "writes_require_approval": true}
+  ],
+  "prohibited_autonomous_actions": [
+    "merge", "deploy", "publish", "spend", "delete", "message_people",
+    "access_secrets", "impersonate_owner", "change_model_weights"
+  ]
+}
