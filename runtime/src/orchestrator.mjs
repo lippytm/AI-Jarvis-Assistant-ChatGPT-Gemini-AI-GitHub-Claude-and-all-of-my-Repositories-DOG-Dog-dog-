@@ -34,7 +34,7 @@ export function createEnvelope(input) {
     goals: Array.isArray(input.goals) ? input.goals : [],
     constraints: Array.isArray(input.constraints) ? input.constraints : [],
     context: input.context && typeof input.context === 'object' ? input.context : {},
-    requestedAction: input.requestedAction || 'analyze',
+    requestedAction: input.requestedAction || 'analyze_repository',
     createdAt: new Date().toISOString()
   };
 }

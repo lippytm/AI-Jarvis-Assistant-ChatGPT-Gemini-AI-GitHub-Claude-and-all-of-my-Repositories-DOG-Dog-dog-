@@ -53,4 +53,9 @@ const standardEnvelope = createEnvelope({
 });
 assert.equal(selectAssistantProfile(standardEnvelope).id, 'standard');
 
+const defaultEnvelope = createEnvelope({
+  task: 'Analyze repository health'
+});
+assert.equal(defaultEnvelope.requestedAction, 'analyze_repository');
+
 console.log('Orchestrator assistant profile checks passed');
