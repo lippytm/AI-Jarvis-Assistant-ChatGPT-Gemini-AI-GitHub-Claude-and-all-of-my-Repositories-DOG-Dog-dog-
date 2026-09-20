@@ -13,6 +13,7 @@ from .approvals import ApprovalQueue
 from .bundles import BundleError, RunBundler
 from .doctor import Doctor
 from .intake import IntakeBridge, IntakeError
+from .patrol import Patrol
 
 
 def _emit(value: Any, as_json: bool) -> None:
@@ -75,6 +76,9 @@ def parser() -> argparse.ArgumentParser:
     intake.add_argument("--json", action="store_true")
     intakes = commands.add_parser("intakes", help="List captured cross-system intakes")
     intakes.add_argument("--json", action="store_true")
+    patrol = commands.add_parser("patrol", help="Run a bounded read-only repository patrol")
+    patrol.add_argument("--owner", default=None)
+    patrol.add_argument("--json", action="store_true")
     return root
 
 
@@ -125,6 +129,8 @@ def main(argv: list[str] | None = None) -> int:
                                            args.allow_sensitive), args.json)
         elif args.command == "intakes":
             _emit(IntakeBridge().list(), args.json)
+        elif args.command == "patrol":
+            _emit(Patrol().run(args.owner), args.json)
         return 0
     except (ProviderError, WorkflowError, BundleError, IntakeError, ValueError) as exc:
         print(f"Jarvis error: {exc}", file=sys.stderr)
