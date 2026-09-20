@@ -1,13 +1,13 @@
 # AI Jarvis runtime
 
-This is the provider-neutral coordination layer. It runs in fail-closed mode: missing credentials, conflicting results, and high-impact actions stop before execution.
+This is the provider-neutral coordination layer. It runs in fail-closed pilot mode: missing credentials, repositories outside the configured pilot repository, conflicting results, and high-impact actions stop before execution.
 
-## Local validation
+## Quick Actions
 
-Run `npm run check`, then start with `npm start`. Copy `.env.example` into the deployment environment and provide credentials through the secret manager, not Git.
+The registry includes repository analysis, change summaries, tests, versioned knowledge sync, issue and pull-request drafts, Slack notifications, deployment, merging, deletion, and secret changes. Low-risk actions may run autonomously. External, destructive, deployment, merge, and secret actions require explicit approval.
 
-## Task intake
+## Validation
 
-POST a JSON task to `/tasks` with `task`, and optionally `category`, `repository`, `files`, and `requestedAction`. The runtime asks each configured provider independently, returns a draft, and marks high-impact actions as `approval_required`.
+Run `npm run check` and `npm test`. Copy `.env.example` into the deployment environment and provide credentials through the secret manager, not Git.
 
-This runtime does not merge, deploy, delete, send external messages, or alter secrets. Those actions must be implemented as separately authenticated workers after Hermes Fabric and GitHub approval integration are available.
+The current runner creates and validates execution plans. It does not directly merge, deploy, delete, send external messages, or alter secrets. Those actions must be separately authenticated workers after Hermes Fabric and GitHub approval integration are available.
