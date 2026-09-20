@@ -1,3 +1,4 @@
+import { canonicalizeQuickActionId } from './quick-actions.mjs';
 import { askClaude, askGemini, askOpenAI, configuredProviders } from './providers.mjs';
 
 const approvalRequired = new Set(['deploy', 'merge', 'delete', 'external_message', 'secret_change', 'financial_commitment']);
@@ -23,12 +24,13 @@ const assistantProfiles = [
 ];
 
 function resolveRequestedAction(value) {
-  const normalizedValue = typeof value === 'string' ? value.trim() : value;
-  if (normalizedValue === undefined || normalizedValue === null) {
+  const rawValue = typeof value === 'string' ? value.trim() : value;
+  const normalizedValue = canonicalizeQuickActionId(value);
+  if (rawValue === undefined || rawValue === null) {
     return { requestedAction: 'analyze', canonicalRequestedAction: 'analyze_repository', requestedActionSource: 'default' };
   }
-  if (normalizedValue === '') return { requestedAction: 'analyze', canonicalRequestedAction: 'analyze_repository', requestedActionSource: 'default' };
-  if (normalizedValue === 'analyze') return { requestedAction: 'analyze', canonicalRequestedAction: 'analyze_repository', requestedActionSource: 'legacy' };
+  if (rawValue === '') return { requestedAction: 'analyze', canonicalRequestedAction: 'analyze_repository', requestedActionSource: 'default' };
+  if (rawValue === 'analyze') return { requestedAction: 'analyze', canonicalRequestedAction: 'analyze_repository', requestedActionSource: 'legacy' };
   return { requestedAction: normalizedValue, canonicalRequestedAction: normalizedValue, requestedActionSource: 'explicit' };
 }
 

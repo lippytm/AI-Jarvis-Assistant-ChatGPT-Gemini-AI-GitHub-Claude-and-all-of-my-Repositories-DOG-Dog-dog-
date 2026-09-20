@@ -1,3 +1,7 @@
+const QUICK_ACTION_ALIASES = Object.freeze({
+  analyze: 'analyze_repository'
+});
+
 export const QUICK_ACTIONS = Object.freeze([
   { id: 'analyze_repository', label: 'Analyze repository', risk: 'low', mode: 'autonomous', capability: 'read_and_analyze' },
   { id: 'summarize_changes', label: 'Summarize changes', risk: 'low', mode: 'autonomous', capability: 'read_and_analyze' },
@@ -15,8 +19,14 @@ export const QUICK_ACTIONS = Object.freeze([
   { id: 'change_secret', label: 'Change secret', risk: 'critical', mode: 'approval_required', capability: 'secret_change' }
 ]);
 
+export function canonicalizeQuickActionId(id) {
+  if (typeof id !== 'string') return id;
+  const normalized = id.trim();
+  return QUICK_ACTION_ALIASES[normalized] || normalized;
+}
+
 export function getQuickAction(id) {
-  const action = QUICK_ACTIONS.find(item => item.id === id);
+  const action = QUICK_ACTIONS.find(item => item.id === canonicalizeQuickActionId(id));
   if (!action) throw new Error(`Unknown Quick Action: ${id}`);
   return action;
 }
