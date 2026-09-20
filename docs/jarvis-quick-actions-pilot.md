@@ -6,7 +6,7 @@ Pilot mode is enabled only when `JARVIS_PILOT_REPOSITORY` is set. Requests for a
 
 ## Autonomous actions
 
-Repository analysis, change summaries, tests, versioned knowledge sync, issue drafts, and pull-request drafts may be planned autonomously. They remain auditable and do not bypass repository permissions.
+Repository analysis, debugging, self-healing repair plans, self-improvement plans, change summaries, tests, versioned knowledge sync, issue drafts, and pull-request drafts may be planned autonomously. They remain auditable and do not bypass repository permissions.
 
 ## Approval-required actions
 
