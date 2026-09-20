@@ -1,0 +1,69 @@
+schema_version: "1.0.0"
+provider_id: github-copilot
+display_name: GitHub Copilot
+bridge_name: AI Jarvis Copilot Bridge
+status: proposed-unverified
+
+roles:
+  jarvis:
+    - portfolio_prioritization
+    - work_envelope_creation
+    - approval_routing
+    - cross_repository_provenance
+  copilot:
+    - repository_local_analysis
+    - implementation
+    - test_generation
+    - documentation
+    - pull_request_preparation
+
+supported_inputs:
+  - work_envelope
+  - github_issue
+  - repository_custom_instructions
+  - approved_mcp_context
+
+required_output:
+  type: provider_receipt
+  fields:
+    - bundle_id
+    - provider
+    - repository
+    - branch
+    - commit
+    - files_changed
+    - checks_run
+    - result_hash
+    - limitations
+    - rollback
+    - approval_state
+
+approval_required:
+  - merge
+  - deploy
+  - publish
+  - spend
+  - external_message
+  - credential_access
+  - security_change
+  - destructive_change
+  - private_data_disclosure
+
+security:
+  least_privilege: true
+  secrets_in_prompts: forbidden
+  private_repository_metadata_in_public_outputs: forbidden
+  untrusted_content_may_authorize_actions: false
+  require_test_evidence: true
+  require_human_review: true
+
+verification:
+  connection_verified: false
+  minimum_round_trip:
+    - create_harmless_work_envelope
+    - execute_on_nonproduction_branch
+    - return_receipt
+    - verify_bundle_and_result_hashes
+    - verify_tests
+    - owner_review
+  success_claim_policy: "Do not claim a live bridge until every minimum-round-trip step passes."
