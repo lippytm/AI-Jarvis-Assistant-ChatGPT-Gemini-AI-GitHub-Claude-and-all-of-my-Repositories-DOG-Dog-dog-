@@ -23,12 +23,13 @@ const assistantProfiles = [
 ];
 
 function resolveRequestedAction(value) {
-  if (value === undefined || value === null) {
+  const normalizedValue = typeof value === 'string' ? value.trim() : value;
+  if (normalizedValue === undefined || normalizedValue === null) {
     return { requestedAction: 'analyze_repository', requestedActionSource: 'default' };
   }
-  if (value === '') return { requestedAction: 'analyze_repository', requestedActionSource: 'explicit' };
-  if (value === 'analyze') return { requestedAction: 'analyze_repository', requestedActionSource: 'legacy' };
-  return { requestedAction: value, requestedActionSource: 'explicit' };
+  if (normalizedValue === '') return { requestedAction: 'analyze_repository', requestedActionSource: 'explicit' };
+  if (normalizedValue === 'analyze') return { requestedAction: 'analyze_repository', requestedActionSource: 'legacy' };
+  return { requestedAction: normalizedValue, requestedActionSource: 'explicit' };
 }
 
 export function createEnvelope(input) {

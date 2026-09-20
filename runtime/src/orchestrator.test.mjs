@@ -82,4 +82,11 @@ const falseActionEnvelope = createEnvelope({
 assert.equal(falseActionEnvelope.requestedAction, false);
 assert.equal(falseActionEnvelope.requestedActionSource, 'explicit');
 
+const paddedLegacyEnvelope = createEnvelope({
+  task: 'Analyze repository health',
+  requestedAction: ' analyze '
+});
+assert.equal(paddedLegacyEnvelope.requestedAction, 'analyze_repository');
+assert.equal(paddedLegacyEnvelope.requestedActionSource, 'legacy');
+
 console.log('Orchestrator assistant profile checks passed');
