@@ -110,7 +110,7 @@ const emptyActionEnvelope = createEnvelope({
   requestedAction: ''
 });
 assert.equal(emptyActionEnvelope.originalRequestedAction, '');
-assert.equal(emptyActionEnvelope.requestedAction, 'analyze');
+assert.equal(emptyActionEnvelope.requestedAction, 'analyze_repository');
 assert.equal(emptyActionEnvelope.canonicalRequestedAction, 'analyze_repository');
 assert.equal(emptyActionEnvelope.requestedActionSource, 'default');
 
