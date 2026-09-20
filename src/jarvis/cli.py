@@ -15,6 +15,7 @@ from .doctor import Doctor
 from .intake import IntakeBridge, IntakeError
 from .patrol import Patrol
 from .improvement import ImprovementLoop
+from .problem_intake import Problem, SolvabilityEngine
 
 
 def _emit(value: Any, as_json: bool) -> None:
@@ -83,6 +84,9 @@ def parser() -> argparse.ArgumentParser:
     improve = commands.add_parser("improve", help="Turn diagnostic evidence into reviewable experiments")
     improve.add_argument("path", help="JSON patrol or observation report")
     improve.add_argument("--json", action="store_true")
+    assess = commands.add_parser("assess-problem", help="Classify and safely route a problem")
+    assess.add_argument("path", help="Problem intake JSON")
+    assess.add_argument("--json", action="store_true")
     return root
 
 
@@ -138,6 +142,10 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "improve":
             from pathlib import Path
             _emit(ImprovementLoop().run(Path(args.path)), args.json)
+        elif args.command == "assess-problem":
+            from pathlib import Path
+            payload = json.loads(Path(args.path).read_text(encoding="utf-8"))
+            _emit(SolvabilityEngine().assess(Problem.from_dict(payload)), args.json)
         return 0
     except (ProviderError, WorkflowError, BundleError, IntakeError, ValueError) as exc:
         print(f"Jarvis error: {exc}", file=sys.stderr)
