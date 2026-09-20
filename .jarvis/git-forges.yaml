@@ -1,0 +1,71 @@
+schema_version: "1.0.0"
+component: Jarvis Git Fabric
+status: clean-room-design
+owner: Charles Earl Lipshay
+
+local_git:
+  supported_read_operations:
+    - status
+    - diff
+    - log
+    - show
+    - branch_list
+    - tag_list
+    - remote_list
+    - blame
+    - worktree_list
+  approval_required_operations:
+    - commit
+    - push
+    - rebase
+    - cherry_pick
+    - reset
+    - tag_create
+    - tag_delete
+    - branch_delete
+    - history_rewrite
+  prohibited_by_default:
+    - force_push
+    - destructive_reset
+    - credential_export
+
+forges:
+  - id: github
+    status: connected-for-controlled-operations
+    objects: [repository, branch, commit, issue, pull_request, workflow, release]
+  - id: gitlab
+    status: adapter-planned
+    objects: [project, branch, commit, issue, merge_request, pipeline, release]
+  - id: bitbucket
+    status: adapter-planned
+    objects: [repository, branch, commit, issue, pull_request, pipeline]
+  - id: azure-devops
+    status: adapter-planned
+    objects: [repository, branch, commit, work_item, pull_request, pipeline]
+  - id: gitea
+    status: adapter-planned
+    objects: [repository, branch, commit, issue, pull_request, action, release]
+  - id: forgejo
+    status: adapter-planned
+    objects: [repository, branch, commit, issue, pull_request, action, release]
+  - id: generic-git
+    status: adapter-planned
+    objects: [remote, branch, commit, tag]
+
+canonical_objects:
+  repository: [id, forge, owner, name, visibility, default_branch, clone_url]
+  change_request: [id, forge, repository, source_branch, target_branch, status, checks]
+  work_item: [id, forge, repository, title, state, labels]
+  pipeline: [id, forge, repository, commit, state, checks, artifacts]
+  receipt: [bundle_id, provider, repository, branch, commit, checks, result_hash, rollback]
+
+safety:
+  clean_room_implementation: true
+  third_party_code_copying: false
+  preserve_license_notices_when_reusing_permitted_code: true
+  least_privilege: true
+  secrets_in_logs_or_prompts: forbidden
+  private_metadata_in_public_feed: forbidden
+  branch_first: true
+  draft_change_request_first: true
+  human_approval_for_merge_deploy_or_destructive_git: true
