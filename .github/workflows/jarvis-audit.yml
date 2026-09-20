@@ -29,6 +29,11 @@ jobs:
         env:
           JARVIS_PATROL_MAX_REPOSITORIES: "250"
           JARVIS_PATROL_STALE_DAYS: "120"
+      - run: python -m jarvis improve data/patrol/latest.json --json | tee jarvis-improvement.json
+        env:
+          JARVIS_LOOP_MAX_OBSERVATIONS: "500"
+          JARVIS_LOOP_MAX_PROPOSALS: "50"
+          JARVIS_LOOP_MINIMUM_REPEATS: "2"
       - uses: actions/upload-artifact@v4
         with:
           name: jarvis-audit-${{ github.run_number }}
@@ -36,7 +41,10 @@ jobs:
             workflow-validation.json
             jarvis-doctor.json
             jarvis-patrol.json
+            jarvis-improvement.json
             data/patrol/latest.json
+            data/improvement/latest.json
+            data/improvement/journal.jsonl
           retention-days: 30
 
 # Read-only by design: no provider credentials, repository writes, merges, or deployments.
