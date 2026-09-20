@@ -53,12 +53,6 @@ export function selectAssistantProfile(envelope) {
       return profile;
     }
   }
-  if (envelope.requestedActionSource === 'explicit') {
-    return {
-      id: 'standard',
-      instructions: 'Focus on repository-safe analysis, explicit risks, and actionable next steps.'
-    };
-  }
   const searchable = [
     envelope.task,
     envelope.category,
