@@ -74,6 +74,14 @@ const bigintEnvelope = createEnvelope({
 });
 assert.match(buildPrompt(bigintEnvelope), /"42"/);
 
+const sharedContext = { summary: 'service recovery in progress' };
+const sharedEnvelope = createEnvelope({
+  task: 'Prepare follow-up notes',
+  context: { primary: sharedContext, secondary: sharedContext }
+});
+assert.equal(selectAssistantProfile(sharedEnvelope).id, 'self_heal');
+assert.doesNotMatch(buildPrompt(sharedEnvelope), /\[circular\]/);
+
 const standardEnvelope = createEnvelope({
   task: 'Summarize changes after a bug fix',
   requestedAction: 'summarize_changes'

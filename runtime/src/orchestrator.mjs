@@ -48,24 +48,25 @@ function serializeSearchValue(value) {
   return String(value);
 }
 
-function flattenSearchValues(value, seen = new WeakSet()) {
+function flattenSearchValues(value, path = []) {
   if (value === undefined || value === null) return [];
-  if (Array.isArray(value)) return value.flatMap(item => flattenSearchValues(item, seen));
+  if (Array.isArray(value)) return value.flatMap(item => flattenSearchValues(item, path));
   if (typeof value === 'object') {
-    if (seen.has(value)) return ['[circular]'];
-    seen.add(value);
-    return Object.entries(value).flatMap(([key, nestedValue]) => [key, ...flattenSearchValues(nestedValue, seen)]);
+    if (path.includes(value)) return ['[circular]'];
+    const nextPath = [...path, value];
+    return Object.entries(value).flatMap(([key, nestedValue]) => [key, ...flattenSearchValues(nestedValue, nextPath)]);
   }
   return [serializeSearchValue(value)];
 }
 
 function safeStringify(value) {
-  const seen = new WeakSet();
-  return JSON.stringify(value, (key, nestedValue) => {
+  const path = [];
+  return JSON.stringify(value, function stringifyReplacer(key, nestedValue) {
     if (typeof nestedValue === 'bigint') return nestedValue.toString();
     if (!nestedValue || typeof nestedValue !== 'object') return nestedValue;
-    if (seen.has(nestedValue)) return '[circular]';
-    seen.add(nestedValue);
+    while (path.length && path[path.length - 1] !== this) path.pop();
+    if (path.includes(nestedValue)) return '[circular]';
+    path.push(nestedValue);
     return nestedValue;
   }, 2);
 }
