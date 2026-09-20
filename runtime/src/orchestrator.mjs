@@ -50,15 +50,19 @@ function serializeSearchValue(value) {
   return String(value);
 }
 
-function flattenSearchValues(value, path = []) {
-  if (value === undefined || value === null) return [];
-  if (Array.isArray(value)) return value.flatMap(item => flattenSearchValues(item, [...path]));
-  if (typeof value === 'object') {
-    if (path.includes(value)) return ['[circular]'];
-    const nextPath = [...path, value];
-    return Object.entries(value).flatMap(([key, nestedValue]) => [key, ...flattenSearchValues(nestedValue, [...nextPath])]);
-  }
-  return [serializeSearchValue(value)];
+function flattenSearchValues(value) {
+  const visit = (nestedValue, ancestors = new Set()) => {
+    if (nestedValue === undefined || nestedValue === null) return [];
+    if (Array.isArray(nestedValue)) return nestedValue.flatMap(item => visit(item, ancestors));
+    if (typeof nestedValue === 'object') {
+      if (ancestors.has(nestedValue)) return ['[circular]'];
+      const nextAncestors = new Set(ancestors);
+      nextAncestors.add(nestedValue);
+      return Object.entries(nestedValue).flatMap(([key, childValue]) => [key, ...visit(childValue, nextAncestors)]);
+    }
+    return [serializeSearchValue(nestedValue)];
+  };
+  return visit(value);
 }
 
 function safeStringify(value) {
