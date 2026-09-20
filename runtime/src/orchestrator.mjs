@@ -23,7 +23,9 @@ const assistantProfiles = [
 ];
 
 function resolveRequestedAction(value) {
-  if (!value) return { requestedAction: 'analyze_repository', requestedActionSource: 'default' };
+  if (value === undefined || value === null || value === '') {
+    return { requestedAction: 'analyze_repository', requestedActionSource: 'default' };
+  }
   if (value === 'analyze') return { requestedAction: 'analyze_repository', requestedActionSource: 'legacy' };
   return { requestedAction: value, requestedActionSource: 'explicit' };
 }
