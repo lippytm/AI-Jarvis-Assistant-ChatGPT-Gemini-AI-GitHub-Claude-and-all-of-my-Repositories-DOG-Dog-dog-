@@ -1,0 +1,33 @@
+name: Jarvis repository scope validation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.jarvis/**'
+      - '.github/workflows/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-scope:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate orchestration contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in \
+            .jarvis/providers/contracts.yaml \
+            .jarvis/repositories.yaml \
+            .jarvis/knowledge/schema.yaml \
+            .jarvis/orchestration/README.md \
+            docs/jarvis-task-templates.md; do
+            test -f "$file"
+          done
+          grep -q 'mode: all_accessible_repositories' .jarvis/repositories.yaml
+          grep -q 'default: hermes_fabric' .jarvis/providers/contracts.yaml
+          grep -q 'approval_required' .jarvis/providers/contracts.yaml
