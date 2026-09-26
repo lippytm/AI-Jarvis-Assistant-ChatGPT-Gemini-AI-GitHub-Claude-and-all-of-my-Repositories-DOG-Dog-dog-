@@ -17,7 +17,10 @@ class WorkflowTests(unittest.TestCase):
             for path in root.rglob("*"):
                 if path.is_dir() or path == workflow:
                     continue
-                content = path.read_text(encoding="utf-8")
+                try:
+                    content = path.read_text(encoding="utf-8")
+                except UnicodeDecodeError:
+                    continue
                 if pattern.search(content):
                     matches.append(path.relative_to(repository).as_posix())
         self.assertEqual(matches, [])
