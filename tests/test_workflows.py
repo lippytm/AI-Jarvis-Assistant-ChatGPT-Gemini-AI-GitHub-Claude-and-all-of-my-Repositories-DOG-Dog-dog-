@@ -1,0 +1,18 @@
+import re
+import unittest
+from pathlib import Path
+
+
+class WorkflowTests(unittest.TestCase):
+    def test_jarvis_sync_credential_pattern_avoids_docs_false_positive(self):
+        workflow = Path('.github/workflows/jarvis-sync.yml').read_text(encoding='utf-8')
+        match = re.search(r"if grep -RInE '([^']+)' \.jarvis \.github; then", workflow)
+        self.assertIsNotNone(match)
+
+        pattern = match.group(1)
+        self.assertIsNone(re.search(pattern, 'docs/jarvis-task-templates.md'))
+        self.assertIsNotNone(re.search(pattern, 'sk-' + 'A' * 20))
+
+
+if __name__ == '__main__':
+    unittest.main()
