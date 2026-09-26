@@ -1,0 +1,19 @@
+{
+  "name": "affiliate_site_review",
+  "description": "Draft a ChatGPT Business review handoff for aievolutionaryevolutions.com and request owner approval before publication.",
+  "version": "1.0.0",
+  "steps": [
+    {
+      "id": "business_review_draft",
+      "type": "handoff",
+      "destination": "chatgpt-business",
+      "content": "# AI Evolutionary Evolutions affiliate review\n\nRun: {{run_id}}\n\nBrief and public-safe evidence:\n{{input}}\n\nReview partner terms, target audience, factual claims, approved URL, plain-language disclosure, preview, and unresolved risks. This is a draft handoff, not a published page or an automated ChatGPT response."
+    },
+    {
+      "id": "owner_publication_gate",
+      "type": "approval",
+      "action": "publish_affiliate_site_update",
+      "summary": "Review the ChatGPT Business affiliate draft, site preview, partner terms and attribution evidence. Publishing to aievolutionaryevolutions.com requires Charles Earl Lipshay's explicit decision. No publishing occurs from this workflow."
+    }
+  ]
+}
