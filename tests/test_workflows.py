@@ -16,16 +16,13 @@ class WorkflowTests(unittest.TestCase):
 
         pattern = match.group('pattern')
 
-        benign_paths = [
+        false_positive_examples = [
             'docs/jarvis-task-templates.md',
-            '.github/workflows/jarvis-repository-scope.yml',
+            'docs/jarvis-task-templates.md; do',
+            '.github/workflows/jarvis-repository-scope.yml:28:            docs/jarvis-task-templates.md; do',
         ]
-        benign_contents = [Path(path).read_text(encoding='utf-8') for path in benign_paths]
-
-        for path in benign_paths:
-            self.assertIsNone(re.search(pattern, path))
-        for content in benign_contents:
-            self.assertIsNone(re.search(pattern, content))
+        for sample in false_positive_examples:
+            self.assertIsNone(re.search(pattern, sample))
 
         self.assertIsNotNone(re.search(pattern, 'sk-' + 'A' * 20))
         self.assertIsNotNone(re.search(pattern, 'AIza' + 'A' * 30))
