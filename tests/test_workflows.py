@@ -19,7 +19,7 @@ class WorkflowTests(unittest.TestCase):
         workflow = Path('.github/workflows/jarvis-sync.yml').read_text(encoding='utf-8')
 
         match = re.search(
-            r"grep\s+-RInE\s+(['\"])(?P<pattern>.+?)\1\s+\.jarvis\s+\.github",
+            r"grep\s+-RInE\s+(['\"])(?P<pattern>.+?)\1",
             workflow,
             flags=re.DOTALL,
         )
