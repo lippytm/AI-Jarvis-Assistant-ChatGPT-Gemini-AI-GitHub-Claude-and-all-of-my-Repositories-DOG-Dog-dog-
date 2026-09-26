@@ -89,7 +89,10 @@ class WorkEnvelope:
     schema_version: str = "1.0.0"
 
     def to_dict(self) -> dict:
-        return asdict(self)
+        data = asdict(self)
+        for key in ("allowed_tools", "prohibited_actions", "acceptance_tests"):
+            data[key] = list(data[key])
+        return data
 
 
 def main(argv: list[str] | None = None) -> int:
