@@ -16,7 +16,7 @@ class WorkflowTests(unittest.TestCase):
         matches = []
         for root in (repository / ".jarvis", repository / ".github"):
             for path in root.rglob("*"):
-                if path.is_dir() or path == workflow or path.suffix not in allowed_suffixes:
+                if path.is_dir() or path.name == workflow.name or path.suffix not in allowed_suffixes:
                     continue
                 content = path.read_text(encoding="utf-8")
                 if pattern.search(content):
