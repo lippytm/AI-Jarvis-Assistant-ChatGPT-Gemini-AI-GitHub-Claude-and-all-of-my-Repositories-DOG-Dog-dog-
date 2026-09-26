@@ -1,0 +1,18 @@
+version: 1
+record:
+  required: [id, title, source, updated_at, owner, content, sensitivity, status]
+  fields:
+    id: immutable identifier
+    title: human-readable name
+    source: repository path, issue, pull request, or approved external reference
+    updated_at: ISO-8601 timestamp
+    owner: responsible person or team
+    content: versioned knowledge text
+    sensitivity: [public, internal, confidential]
+    status: [draft, approved, superseded]
+    supersedes: optional prior record id
+rules:
+  - only approved records are canonical
+  - confidential content must not be sent to providers without explicit authorization
+  - every update must retain history
+  - duplicate or contradictory records become review tasks

@@ -1,0 +1,42 @@
+name: Jarvis synchronization check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-control-plane:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate required control files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f .jarvis/config.yaml
+          test -f .jarvis/README.md
+          test -f .jarvis/approvals/policy.md
+          test -f .jarvis/instructions/operating-contract.md
+          grep -q 'provider: github' .jarvis/config.yaml
+          grep -q 'approval_required' .jarvis/config.yaml
+          # Require realistic minimum token lengths to avoid matching ordinary
+          # strings such as "task-templates" or the scanner's own source.
+          if grep -RInE '(sk-[A-Za-z0-9_-]{20,}|AIza[A-Za-z0-9_-]{30,}|AKIA[A-Z0-9]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----)' .jarvis; then
+            echo 'Potential credential detected in control-plane files.'
+            exit 1
+          fi
+
+      - name: Summarize synchronization scope
+        run: |
+          echo 'Jarvis source of truth: GitHub'
+          echo 'Synchronization trigger: repository change'
+          echo 'Automatic: analyze, draft, issue/PR updates, tests'
+          echo 'Approval required: deploy, external messages, merge, destructive changes'

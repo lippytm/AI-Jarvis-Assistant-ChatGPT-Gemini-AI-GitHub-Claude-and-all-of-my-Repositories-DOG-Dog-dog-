@@ -1,0 +1,25 @@
+name: Jarvis runtime check
+
+on:
+  push:
+    branches: [main]
+    paths: ['runtime/**']
+  pull_request:
+    paths: ['runtime/**']
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: runtime
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm run check
+      - run: npm test
