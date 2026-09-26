@@ -6,7 +6,6 @@ from pathlib import Path
 class WorkflowTests(unittest.TestCase):
     def test_jarvis_sync_credential_pattern_avoids_docs_false_positive(self):
         workflow = Path('.github/workflows/jarvis-sync.yml').read_text(encoding='utf-8')
-        docs_template = Path('docs/jarvis-task-templates.md').read_text(encoding='utf-8')
 
         match = re.search(
             r"grep\s+-RInE\s+(['\"])(?P<pattern>.+?)\1\s+\.jarvis\s+\.github",
@@ -22,8 +21,16 @@ class WorkflowTests(unittest.TestCase):
         self.assertIn('-----BEGIN [A-Z ]*PRIVATE KEY-----', pattern)
         self.assertNotIn('sk-[A-Za-z0-9]|', pattern)
 
-        self.assertIsNone(re.search(pattern, 'docs/jarvis-task-templates.md'))
-        self.assertIsNone(re.search(pattern, docs_template))
+        benign_paths = [
+            'docs/jarvis-task-templates.md',
+            '.github/workflows/jarvis-repository-scope.yml',
+        ]
+        benign_contents = [Path(path).read_text(encoding='utf-8') for path in benign_paths]
+
+        for path in benign_paths:
+            self.assertIsNone(re.search(pattern, path))
+        for content in benign_contents:
+            self.assertIsNone(re.search(pattern, content))
 
         self.assertIsNotNone(re.search(pattern, 'sk-' + 'A' * 20))
         self.assertIsNotNone(re.search(pattern, 'AIza' + 'A' * 30))
