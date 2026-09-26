@@ -1,4 +1,5 @@
 import re
+import shutil
 import subprocess
 import unittest
 from pathlib import Path
@@ -15,13 +16,13 @@ class WorkflowTests(unittest.TestCase):
         )
         return result.returncode == 0
 
+    @unittest.skipUnless(shutil.which('grep'), 'requires grep')
     def test_jarvis_sync_credential_pattern_avoids_docs_false_positive(self):
         workflow = Path('.github/workflows/jarvis-sync.yml').read_text(encoding='utf-8')
 
         match = re.search(
-            r"grep\s+-[^\n]*E[^\n]*\s+(['\"])(?P<pattern>.+?)\1",
+            r"grep\s+-[^\n]*E[^\n]*\s+(['\"])(?P<pattern>[^'\"]+)\1",
             workflow,
-            flags=re.DOTALL,
         )
         self.assertIsNotNone(match)
 
