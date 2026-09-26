@@ -8,10 +8,16 @@ class WorkflowTests(unittest.TestCase):
         workflow = Path('.github/workflows/jarvis-sync.yml').read_text(encoding='utf-8')
         docs_template = Path('docs/jarvis-task-templates.md').read_text(encoding='utf-8')
 
-        pattern = r'(sk-[A-Za-z0-9_-]{20,}|AIza[A-Za-z0-9_-]{30,}|AKIA[A-Z0-9]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----)'
+        match = re.search(r"grep\s+-RInE\s+'([^']+)'", workflow, flags=re.MULTILINE)
+        self.assertIsNotNone(match)
 
-        self.assertIn(pattern, workflow)
-        self.assertNotIn('sk-[A-Za-z0-9]|', workflow)
+        pattern = match.group(1)
+        self.assertIn('sk-[A-Za-z0-9_-]{20,}', pattern)
+        self.assertIn('AIza[A-Za-z0-9_-]{30,}', pattern)
+        self.assertIn('AKIA[A-Z0-9]{16}', pattern)
+        self.assertIn('-----BEGIN [A-Z ]*PRIVATE KEY-----', pattern)
+        self.assertNotIn('sk-[A-Za-z0-9]|', pattern)
+
         self.assertIsNone(re.search(pattern, 'docs/jarvis-task-templates.md'))
         self.assertIsNone(re.search(pattern, docs_template))
         self.assertIsNotNone(re.search(pattern, 'sk-' + 'A' * 20))
