@@ -6,7 +6,11 @@ from pathlib import Path
 class WorkflowTests(unittest.TestCase):
     def test_jarvis_sync_credential_pattern_avoids_docs_false_positive(self):
         workflow = Path('.github/workflows/jarvis-sync.yml').read_text(encoding='utf-8')
-        match = re.search(r"if grep -RInE '([^']+)' \.jarvis \.github; then", workflow)
+        match = re.search(
+            r"if\s+grep\s+-RInE\s+'([^']+)'\s+\.jarvis\s+\.github;\s*then",
+            workflow,
+            flags=re.MULTILINE,
+        )
         self.assertIsNotNone(match)
 
         pattern = match.group(1)
