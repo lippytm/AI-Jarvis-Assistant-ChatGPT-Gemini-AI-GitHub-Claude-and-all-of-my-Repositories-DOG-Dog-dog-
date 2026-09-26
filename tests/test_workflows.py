@@ -12,7 +12,7 @@ class WorkflowTests(unittest.TestCase):
         allowed_suffixes = {".json", ".md", ".yaml", ".yml"}
 
         match = re.search(
-            r"grep -RInE .* '([^']+)' \.jarvis \.github; then",
+            r"--exclude='jarvis-sync\.yml' '([^']+)' \.jarvis \.github; then",
             workflow_text,
         )
         self.assertIsNotNone(match)
