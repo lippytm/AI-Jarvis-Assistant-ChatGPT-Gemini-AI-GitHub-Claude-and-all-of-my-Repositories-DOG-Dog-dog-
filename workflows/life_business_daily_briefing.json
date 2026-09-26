@@ -1,0 +1,33 @@
+{
+  "name": "AI Jarvis Life Business Daily Briefing",
+  "description": "Creates a bounded daily decision brief across the seven Life/Business lanes without taking consequential action.",
+  "steps": [
+    {
+      "id": "gemini_opportunity_scan",
+      "type": "ai",
+      "provider": "gemini-jarvis",
+      "system": "Scan for evidence-backed learning, creative, technology and business opportunities. Separate facts, assumptions and uncertainty.",
+      "prompt": "Review this current portfolio context and identify at most three useful opportunities: {{input}}"
+    },
+    {
+      "id": "claude_risk_review",
+      "type": "ai",
+      "provider": "anthropic",
+      "system": "Independently review workload, safety, feasibility, evidence and opportunity cost.",
+      "prompt": "Challenge this opportunity scan and identify overload, weak evidence, hidden dependencies and safer corrections: {{steps.gemini_opportunity_scan.output}}"
+    },
+    {
+      "id": "jarvis_priority_brief",
+      "type": "ai",
+      "provider": "chatgpt",
+      "system": "Act as AI Jarvis. Quality is Job #1. Create a concise brief that protects wellbeing, advances one revenue-enabling deliverable and preserves owner approval.",
+      "prompt": "Produce today's Life/Business brief with: safety or essential obligations, blockers, one primary deliverable, one learning action, one long-range action, decisions needed, and next checkpoint.\nPortfolio: {{input}}\nOpportunities: {{steps.gemini_opportunity_scan.output}}\nRisk review: {{steps.claude_risk_review.output}}"
+    },
+    {
+      "id": "owner_briefing_handoff",
+      "type": "handoff",
+      "destination": "charles-owner-briefing",
+      "content": "# AI Jarvis Life/Business Daily Brief\n\nRun: {{run_id}}\n\n{{steps.jarvis_priority_brief.output}}\n\nDraft only. No external action was taken."
+    }
+  ]
+}
