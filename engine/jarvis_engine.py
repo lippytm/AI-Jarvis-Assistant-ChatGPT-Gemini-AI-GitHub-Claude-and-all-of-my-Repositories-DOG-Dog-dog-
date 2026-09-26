@@ -79,12 +79,14 @@ class WorkEnvelope:
     bundle_id: str
     repository: str
     goal: str
+    scope: str
     risk_class: str
     allowed_tools: tuple[str, ...]
     prohibited_actions: tuple[str, ...]
     acceptance_tests: tuple[str, ...]
     approval_state: str
     input_hash: str
+    schema_version: str = "1.0.0"
 
     def to_dict(self) -> dict:
         return asdict(self)
