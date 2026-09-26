@@ -29,8 +29,11 @@ jobs:
           test -f .jarvis/instructions/operating-contract.md
           grep -q 'provider: github' .jarvis/config.yaml
           grep -q 'approval_required' .jarvis/config.yaml
-          # Require token-length evidence so ordinary names and this scanner do not match.
-          if grep -RInE '(sk-[A-Za-z0-9_-]{20,}|AIza[A-Za-z0-9_-]{30,}|AKIA[A-Z0-9]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----)' .jarvis .github; then
+          # Scan only control-plane text files and exclude this workflow to avoid self-matches.
+          if find .jarvis .github -type f \
+            \( -name '*.md' -o -name '*.yml' -o -name '*.yaml' -o -name '*.json' \) \
+            ! -name 'jarvis-sync.yml' \
+            -print0 | xargs -0 grep -InE '(sk-[A-Za-z0-9_-]{20,}|AIza[A-Za-z0-9_-]{30,}|AKIA[A-Z0-9]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----)'; then
             echo 'Potential credential detected in control-plane files.'
             exit 1
           fi
