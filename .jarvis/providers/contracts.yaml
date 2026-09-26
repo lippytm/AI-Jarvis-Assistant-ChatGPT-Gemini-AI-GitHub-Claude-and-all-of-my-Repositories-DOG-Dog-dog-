@@ -1,0 +1,38 @@
+version: 1
+providers:
+  github:
+    responsibilities: [source_of_truth, repository_events, issues, pull_requests, actions, audit_log]
+    required_secrets: [GITHUB_TOKEN]
+  gemini:
+    responsibilities: [large_context_analysis, knowledge_synthesis, document_drafting]
+    required_secrets: [GEMINI_API_KEY]
+  openai:
+    responsibilities: [planning, coding_drafts, structured_outputs]
+    required_secrets: [OPENAI_API_KEY]
+  anthropic:
+    responsibilities: [code_review, risk_analysis, second_opinion]
+    required_secrets: [ANTHROPIC_API_KEY]
+  hermes_fabric:
+    responsibilities: [routing, memory, task_execution, approvals]
+    required_secrets: [HERMES_ENDPOINT, HERMES_TOKEN]
+  slack:
+    responsibilities: [notifications, approval_requests]
+    required_secrets: [SLACK_BOT_TOKEN]
+  notion:
+    responsibilities: [optional_human_readable_knowledge_mirror]
+    required_secrets: [NOTION_TOKEN]
+
+routing:
+  default: hermes_fabric
+  code_review: [anthropic, openai]
+  knowledge: [gemini, anthropic]
+  planning: [openai, gemini]
+  final_risk_check: anthropic
+  execution: github
+  notification: slack
+
+rules:
+  - providers_are_advisors_not_sources_of_truth
+  - conflicting_outputs_require_human_review
+  - missing_credentials_fail_closed
+  - secrets_never_enter_shared_memory

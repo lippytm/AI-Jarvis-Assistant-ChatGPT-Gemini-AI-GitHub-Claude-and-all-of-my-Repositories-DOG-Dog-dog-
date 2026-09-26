@@ -1,0 +1,19 @@
+version: 1
+scope:
+  owner: lippytm
+  mode: all_accessible_repositories
+  include_private: true
+  include_forks: false
+  include_archived: false
+synchronization:
+  trigger: repository_change
+  event_sources: [push, pull_request, issues, issue_comment, workflow_run]
+  idempotency_key: repository_commit_or_event_id
+  concurrency_group: jarvis-${repository}
+  max_parallel_repositories: 4
+  failure_mode: isolate_repository_and_open_review_issue
+per_repository:
+  read: [README, CONTRIBUTING, CODEOWNERS, workflows, issue_templates, instruction_files]
+  analyze: [changed_files, tests, dependencies, security_findings, linked_issues]
+  write_defaults: [draft_pull_request, issue_comment, documentation_draft]
+  approval_required: [merge, deploy, delete, external_message, secret_change]

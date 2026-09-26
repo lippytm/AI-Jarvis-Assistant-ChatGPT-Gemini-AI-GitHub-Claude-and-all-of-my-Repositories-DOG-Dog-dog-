@@ -1,0 +1,41 @@
+version: 1
+name: ai-jarvis
+organization: Building Business of businesses Systems of Systems of Affiliate Marketing and Business Financing
+source_of_truth:
+  provider: github
+  owner: lippytm
+  control_repository: AI-Jarvis-Assistant-ChatGPT-Gemini-AI-GitHub-Claude-and-all-of-my-Repositories-DOG-Dog-dog-
+  default_branch: main
+  sync_trigger: repository_change
+scope:
+  repositories: all_accessible_repositories
+  shared_memory: versioned_documents_and_instructions
+  tasks: github_issues_and_pull_requests
+  approvals: github_issue_comments_or_environment_approvals
+capabilities:
+  read_and_analyze: allowed
+  create_drafts_and_code: allowed
+  create_or_update_issues_and_pull_requests: allowed
+  deploy: approval_required
+  send_external_messages: approval_required
+  merge_pull_requests: approval_required
+  destructive_changes: approval_required
+providers:
+  github:
+    role: source_of_truth_and_execution_audit
+  gemini:
+    role: analysis_and_knowledge
+    credential: GEMINI_API_KEY
+  openai:
+    role: planning_and_drafting
+    credential: OPENAI_API_KEY
+  anthropic:
+    role: review_and_reasoning
+    credential: ANTHROPIC_API_KEY
+memory:
+  canonical_paths:
+    - .jarvis/instructions
+    - .jarvis/knowledge
+    - .jarvis/approvals
+  conflict_policy: stop_and_open_review_issue
+  secret_policy: reject_secrets
