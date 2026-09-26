@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0",
+  "owner": "Charles Earl Lipshay",
+  "coordinator": "ai-jarvis-assistant",
+  "canonical_record": "github",
+  "stations": [
+    {"id": "gemini-ai", "provider": "gemini", "role": "research, alternatives, multimodal exploration and independent creation", "connection": "credential_required"},
+    {"id": "chatgpt-business", "provider": "chatgpt", "role": "architecture, orchestration, continuity, documentation and integration", "connection": "handoff_draft"},
+    {"id": "github", "provider": "github", "role": "canonical code, versions, tests, provenance and release evidence", "connection": "connected"},
+    {"id": "claude-coworker", "provider": "anthropic", "role": "independent review, red-team analysis and implementation critique", "connection": "credential_required"},
+    {"id": "hostinger", "provider": "hostinger", "role": "website assembly, staging, commerce and approved deployment", "connection": "credential_required"}
+  ],
+  "future_station_policy": "register, verify a harmless round trip, assign least privilege, then enable",
+  "required_handoff_fields": ["bundle_id", "project", "version", "source_station", "changes", "evidence", "tests", "risks", "approval_state", "next_action", "sha256"],
+  "owner_approval_required": ["merge", "deploy", "publish", "spend", "activate_checkout", "access_credentials", "install", "message_people", "delete", "legal_or_financial_commitment"]
+}

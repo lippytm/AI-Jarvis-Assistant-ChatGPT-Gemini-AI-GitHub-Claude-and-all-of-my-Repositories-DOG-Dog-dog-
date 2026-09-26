@@ -1,0 +1,45 @@
+{
+  "name": "Unified Life Business Creation Cycle",
+  "description": "Gemini researches and designs, Claude challenges, ChatGPT synthesizes, GitHub receives a canonical draft, and Hostinger receives a deployment draft after owner review.",
+  "steps": [
+    {
+      "id": "gemini_research_design",
+      "type": "ai",
+      "provider": "gemini-jarvis",
+      "system": "You are Gemini AI station 1 in the AI Jarvis fabric. Research, generate alternatives, separate facts from assumptions, and create an evidence-aware design.",
+      "prompt": "Research and design this Life/Business or AI systems request. Return evidence, assumptions, alternatives, risks and a recommended build: {{input}}"
+    },
+    {
+      "id": "claude_independent_review",
+      "type": "ai",
+      "provider": "anthropic",
+      "system": "You are Claude Coworker station 4. Perform an independent architecture, safety, feasibility and quality review. Do not merely agree.",
+      "prompt": "Review the original request and Gemini design. Identify defects, missing evidence, security risks, business risks and concrete corrections.\nRequest: {{input}}\nGemini design: {{steps.gemini_research_design.output}}"
+    },
+    {
+      "id": "jarvis_synthesis",
+      "type": "ai",
+      "provider": "chatgpt",
+      "system": "You are AI Jarvis Assistant, the coordinating Systems Creator and Builder. Reconcile evidence and disagreements into a bounded, testable implementation plan.",
+      "prompt": "Create the unified implementation packet. Preserve unresolved disagreement and require evidence for promotion.\nRequest: {{input}}\nGemini: {{steps.gemini_research_design.output}}\nClaude: {{steps.claude_independent_review.output}}"
+    },
+    {
+      "id": "github_canonical_draft",
+      "type": "handoff",
+      "destination": "github-canonical-draft",
+      "content": "# AI Jarvis canonical GitHub handoff\n\nRun: {{run_id}}\n\n{{steps.jarvis_synthesis.output}}\n\nStatus: draft only; no commit, merge or deployment was performed."
+    },
+    {
+      "id": "owner_release_approval",
+      "type": "approval",
+      "action": "review_unified_creation_packet",
+      "summary": "Review the Gemini, Claude and AI Jarvis creation packet before any repository write, merge, publication, paid call, checkout activation or deployment."
+    },
+    {
+      "id": "hostinger_deployment_draft",
+      "type": "handoff",
+      "destination": "hostinger-deployment-draft",
+      "content": "# Hostinger implementation handoff\n\nRun: {{run_id}}\nApproval record: {{steps.owner_release_approval.approval_id}}\n\n{{steps.jarvis_synthesis.output}}\n\nThis is a staging draft only. Live deployment requires Charles Earl Lipshay's explicit approval."
+    }
+  ]
+}
