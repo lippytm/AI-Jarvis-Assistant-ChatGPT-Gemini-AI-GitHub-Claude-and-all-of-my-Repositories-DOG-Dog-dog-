@@ -4,6 +4,7 @@ import unittest
 from jsonschema import ValidationError
 
 from engine.contracts import digest, validate, verify_round_trip
+from engine.jarvis_engine import WorkEnvelope
 
 
 class ContractTests(unittest.TestCase):
@@ -38,6 +39,18 @@ class ContractTests(unittest.TestCase):
         report = verify_round_trip(self.envelope, self.receipts, self.results)
         self.assertTrue(report["result_agreement"])
         self.assertTrue(report["simulated"])
+
+    def test_engine_work_envelope_matches_shared_schema(self):
+        source = self.envelope
+        value = WorkEnvelope(
+            bundle_id=source["bundle_id"], repository=source["repository"],
+            goal=source["goal"], scope=source["scope"], risk_class=source["risk_class"],
+            allowed_tools=tuple(source["allowed_tools"]),
+            prohibited_actions=tuple(source["prohibited_actions"]),
+            acceptance_tests=tuple(source["acceptance_tests"]),
+            approval_state=source["approval_state"], input_hash=source["input_hash"],
+        ).to_dict()
+        validate("work-envelope", value)
 
     def test_changed_result_is_rejected(self):
         self.results["github-copilot"]["proposal"] = "Tampered"
