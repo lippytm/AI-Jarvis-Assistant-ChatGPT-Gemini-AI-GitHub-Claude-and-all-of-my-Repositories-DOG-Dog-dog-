@@ -1,0 +1,50 @@
+name: jarvis-audit
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 15 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jarvis-audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: python -m pip install -e .
+      - run: python -m unittest discover -s tests -v
+      - run: python -m jarvis validate-workflows --json | tee workflow-validation.json
+      - run: python -m jarvis doctor --json | tee jarvis-doctor.json
+      - run: python -m jarvis patrol --owner lippytm --json | tee jarvis-patrol.json
+        env:
+          JARVIS_PATROL_MAX_REPOSITORIES: "250"
+          JARVIS_PATROL_STALE_DAYS: "120"
+      - run: python -m jarvis improve data/patrol/latest.json --json | tee jarvis-improvement.json
+        env:
+          JARVIS_LOOP_MAX_OBSERVATIONS: "500"
+          JARVIS_LOOP_MAX_PROPOSALS: "50"
+          JARVIS_LOOP_MINIMUM_REPEATS: "2"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jarvis-audit-${{ github.run_number }}
+          path: |
+            workflow-validation.json
+            jarvis-doctor.json
+            jarvis-patrol.json
+            jarvis-improvement.json
+            data/patrol/latest.json
+            data/improvement/latest.json
+            data/improvement/journal.jsonl
+          retention-days: 30
+
+# Read-only by design: no provider credentials, repository writes, merges, or deployments.

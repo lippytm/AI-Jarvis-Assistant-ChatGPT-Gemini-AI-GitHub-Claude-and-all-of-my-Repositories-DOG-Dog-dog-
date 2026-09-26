@@ -1,0 +1,46 @@
+{
+  "name": "Prompt #11 Product Factory",
+  "description": "Turn one business concept into researched, challenged, production-ready product documentation.",
+  "steps": [
+    {
+      "id": "market_research",
+      "type": "ai",
+      "provider": "perplexity",
+      "system": "Research current market evidence. Cite sources and label uncertainty.",
+      "prompt": "Research demand, competitors, audiences, and risks for this concept: {{input}}"
+    },
+    {
+      "id": "product_genome",
+      "type": "ai",
+      "provider": "gemini-jarvis",
+      "system": "You are the Prompt #11 Product Genome designer.",
+      "prompt": "Create a reusable product genome with audience, promise, modules, formats, price hypotheses, affiliate version, and mutation variables. Concept: {{input}}\nResearch: {{steps.market_research.output}}"
+    },
+    {
+      "id": "qa_challenge",
+      "type": "ai",
+      "provider": "anthropic",
+      "system": "You are the QA and Whistleblowers review system. Be constructive and rigorous.",
+      "prompt": "Challenge this product genome for unsupported claims, safety, legal, privacy, execution, and customer-value risks. Propose corrections.\n{{steps.product_genome.output}}"
+    },
+    {
+      "id": "master_build",
+      "type": "ai",
+      "provider": "chatgpt",
+      "system": "You are AI Jarvis Control Tower operating Prompt #11.",
+      "prompt": "Produce the master build package: product brief, MVP, content outline, sales-page skeleton, 30-day build plan, success metrics, and provenance notes.\nConcept: {{input}}\nResearch: {{steps.market_research.output}}\nGenome: {{steps.product_genome.output}}\nQA: {{steps.qa_challenge.output}}"
+    },
+    {
+      "id": "owner_approval",
+      "type": "approval",
+      "action": "authorize-product-production",
+      "summary": "Review and authorize this Prompt #11 product package before publishing or spending money:\n{{steps.master_build.output}}"
+    },
+    {
+      "id": "business_handoff",
+      "type": "handoff",
+      "destination": "chatgpt-business",
+      "content": "# Prompt #11 Product Factory handoff\n\nApproval: {{steps.owner_approval.approval_id}}\n\n{{steps.master_build.output}}"
+    }
+  ]
+}
