@@ -29,7 +29,8 @@ jobs:
           test -f .jarvis/instructions/operating-contract.md
           grep -q 'provider: github' .jarvis/config.yaml
           grep -q 'approval_required' .jarvis/config.yaml
-          if grep -RInE '(sk-[A-Za-z0-9]|AIza[A-Za-z0-9_-]{20,}|AKIA[A-Z0-9]{16}|-----BEGIN .*PRIVATE KEY-----)' .jarvis .github; then
+          # Require token-length evidence so ordinary names and this scanner do not match.
+          if grep -RInE '(sk-[A-Za-z0-9_-]{20,}|AIza[A-Za-z0-9_-]{30,}|AKIA[A-Z0-9]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----)' .jarvis .github; then
             echo 'Potential credential detected in control-plane files.'
             exit 1
           fi
