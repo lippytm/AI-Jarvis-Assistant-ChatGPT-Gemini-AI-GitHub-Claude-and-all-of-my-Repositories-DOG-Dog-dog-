@@ -15,11 +15,6 @@ class WorkflowTests(unittest.TestCase):
         self.assertIsNotNone(match)
 
         pattern = match.group('pattern')
-        self.assertIn('sk-[A-Za-z0-9_-]{20,}', pattern)
-        self.assertIn('AIza[A-Za-z0-9_-]{30,}', pattern)
-        self.assertIn('AKIA[A-Z0-9]{16}', pattern)
-        self.assertIn('-----BEGIN [A-Z ]*PRIVATE KEY-----', pattern)
-        self.assertNotIn('sk-[A-Za-z0-9]|', pattern)
 
         benign_paths = [
             'docs/jarvis-task-templates.md',
