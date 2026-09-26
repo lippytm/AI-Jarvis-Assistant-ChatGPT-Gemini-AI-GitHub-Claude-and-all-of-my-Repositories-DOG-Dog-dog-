@@ -150,4 +150,7 @@ An adapter is not considered live until a harmless minimum-permission round trip
 - `.github/copilot-instructions.md` provides the Copilot-side contract.
 - `.jarvis/providers/provider-registry.yaml` declares providers and routing.
 - `.jarvis/providers/github-copilot.yaml` defines the first provider bridge.
-- The next implementation is a shared JSON Schema for work envelopes and diagnostic receipts, followed by one harmless round-trip test.
+- `schemas/work-envelope.schema.json` and `schemas/diagnostic-receipt.schema.json` define the version 1 contracts.
+- `engine/contracts.py` validates them with `jsonschema>=4.18,<5` and checks local result hashes, bundle IDs, and paired provider IDs.
+- `python -m pip install 'jsonschema>=4.18,<5'` then `python -m unittest discover -s tests -v` runs the offline contract and engine tests; the `Jarvis coding contracts` workflow runs these on pull requests.
+- The paired Codex/Copilot example in `tests/test_contracts.py` is simulated. It checks the transport contract only. Neither provider was invoked or authenticated, and a matching hash does not prove provider identity. A real round trip requires separately captured, authenticated provider outputs and human review of disagreements.
