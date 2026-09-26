@@ -8,7 +8,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertIn("find .jarvis .github -type f", workflow)
         self.assertIn("! -name 'jarvis-sync.yml'", workflow)
         self.assertIn("-name '*.md' -o -name '*.yml' -o -name '*.yaml' -o -name '*.json'", workflow)
-        self.assertIn("xargs -0 grep -InE", workflow)
+        self.assertIn("xargs -0 -r grep -InE", workflow)
 
 
 if __name__ == "__main__":
