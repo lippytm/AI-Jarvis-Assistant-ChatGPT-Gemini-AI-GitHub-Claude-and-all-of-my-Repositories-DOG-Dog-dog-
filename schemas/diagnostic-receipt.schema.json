@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/lippytm/AI-Jarvis-Assistant-ChatGPT-Gemini-AI-GitHub-Claude-and-all-of-my-Repositories-DOG-Dog-dog-/blob/main/schemas/diagnostic-receipt.schema.json",
+  "title": "Jarvis coding diagnostic receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "bundle_id", "provider", "repository", "branch", "commit", "files_changed", "reproduction", "findings", "checks_run", "check_results", "input_hash", "result_hash", "limitations", "rollback", "approval_state", "simulation"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "bundle_id": {"type": "string", "minLength": 1},
+    "provider": {"enum": ["openai-codex", "github-copilot"]},
+    "repository": {"type": "string", "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"},
+    "branch": {"type": "string", "minLength": 1},
+    "commit": {"type": "string", "pattern": "^([a-f0-9]{40}|uncommitted)$"},
+    "files_changed": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "reproduction": {"type": "string", "minLength": 1},
+    "findings": {"type": "array", "items": {"type": "string"}},
+    "checks_run": {"type": "array", "items": {"type": "string"}},
+    "check_results": {"type": "array", "items": {"type": "string"}},
+    "input_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "result_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "limitations": {"type": "string", "minLength": 1},
+    "rollback": {"type": "string", "minLength": 1},
+    "approval_state": {"enum": ["pending", "approved", "rejected"]},
+    "simulation": {"type": "boolean"}
+  }
+}
