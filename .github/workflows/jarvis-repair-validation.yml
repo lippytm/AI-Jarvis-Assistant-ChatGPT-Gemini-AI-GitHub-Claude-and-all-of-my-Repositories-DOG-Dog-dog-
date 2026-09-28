@@ -1,0 +1,51 @@
+name: Jarvis repair validation
+
+on:
+  push:
+    branches: [jarvis/repair-2026-09-28]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jarvis-repair-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  offline-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PYTHONPATH: src
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - name: Check out exact tested source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Run existing offline tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p repair-evidence
+          python3 -m unittest discover -s tests -v 2>&1 | tee repair-evidence/tests.txt
+      - name: Record public source and commit for independent review
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p repair-evidence
+          git rev-parse HEAD > repair-evidence/commit.txt
+          git archive --format=tar.gz --output=repair-evidence/source.tar.gz HEAD
+          (cd repair-evidence && sha256sum source.tar.gz > source.sha256)
+      - name: Retain validation evidence temporarily
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: jarvis-repair-evidence-${{ github.run_id }}
+          path: repair-evidence/
+          retention-days: 1
+          if-no-files-found: error
