@@ -26,6 +26,13 @@ def _hash(value: object) -> str:
     return hashlib.sha256(_canonical(value)).hexdigest()
 
 
+class AccessBlocked(PermissionError):
+    """An authorized adapter reports that this access route is unavailable.
+
+    Raising this does not grant access. Its message is excluded from receipts.
+    """
+
+
 @dataclass(frozen=True)
 class Stage:
     id: str
@@ -54,38 +61,72 @@ class MemPalace:
                        (run_id, sequence, stage, _canonical(evidence).decode(), previous, digest))
         return digest
 
-    def verify(self, run_id: str) -> bool:
+    def _verified_history(self, run_id: str) -> list[dict]:
+        # Validate and return the same snapshot, not a second unverified read.
         with sqlite3.connect(self.path) as db:
             rows = db.execute("SELECT sequence, stage, evidence_json, previous_hash, entry_hash FROM events WHERE run_id=? ORDER BY sequence", (run_id,)).fetchall()
         previous = "0" * 64
+        events = []
         for index, (sequence, stage, evidence_json, stored_previous, digest) in enumerate(rows):
             if sequence != index or stored_previous != previous:
-                return False
+                raise ValueError("Invalid MemPalace evidence chain")
+            try:
+                evidence = json.loads(evidence_json)
+            except (TypeError, ValueError) as exc:
+                raise ValueError("Invalid MemPalace evidence JSON") from exc
             entry = {"run_id": run_id, "sequence": sequence, "stage": stage,
-                     "evidence": json.loads(evidence_json), "previous_hash": previous}
+                     "evidence": evidence, "previous_hash": previous}
             if _hash(entry) != digest:
-                return False
+                raise ValueError("Invalid MemPalace evidence hash")
+            events.append({**entry, "entry_hash": digest})
             previous = digest
-        return bool(rows)
+        return events
+
+    def verify(self, run_id: str) -> bool:
+        try:
+            return bool(self._verified_history(run_id))
+        except ValueError:
+            return False
+
+    def history(self, run_id: str, *, expected_head: str | None = None) -> list[dict]:
+        """Retrieve verified local evidence, not prompts or provider truth.
+
+        Keep an expected head hash separately to detect removal of tail events.
+        Without that anchor, a valid prefix remains indistinguishable from a run.
+        """
+        events = self._verified_history(run_id)
+        if not events:
+            raise ValueError("No MemPalace evidence for this run")
+        if expected_head is not None and events[-1]["entry_hash"] != expected_head:
+            raise ValueError("MemPalace head does not match expected anchor")
+        return events
 
 
 def run_swarm(stages: list[Stage], input_value: object, handlers: dict[str, Callable],
-              ledger: MemPalace, *, max_stages: int = 8) -> dict:
+              ledger: MemPalace, *, max_stages: int = 8,
+              blocked_stations: frozenset[str] = frozenset()) -> dict:
     """Execute a bounded sequence; external handlers must be injected explicitly.
 
-    Only input and output hashes enter the ledger. A failed stage stops the chain.
+    Only input and output hashes enter the ledger. Failed or blocked stages stop.
+    Caller-supplied blocks are restrictions, never authentication or permission.
     Consequential actions always return pending approval without calling a handler.
     """
     if not stages or len(stages) > max_stages or len({s.id for s in stages}) != len(stages):
         raise ValueError("Invalid stage count or duplicate stage ID")
     if any(s.station not in STATIONS or not s.id or s.action not in {"draft", "read", *WRITE_ACTIONS} for s in stages):
         raise ValueError("Unregistered station or action")
+    if not isinstance(blocked_stations, (set, frozenset)) or not blocked_stations.issubset(STATIONS):
+        raise ValueError("Invalid blocked-station policy")
     run_id = str(uuid4())
     value = input_value
     receipts = []
     for stage in stages:
         if stage.action in WRITE_ACTIONS:
             evidence = {"station": stage.station, "action": stage.action, "status": "pending_owner_approval", "input_sha256": _hash(value)}
+            receipts.append({"stage": stage.id, **evidence, "entry_hash": ledger.append(run_id, stage.id, evidence)})
+            break
+        if stage.station in blocked_stations:
+            evidence = {"station": stage.station, "action": stage.action, "status": "blocked_access", "input_sha256": _hash(value)}
             receipts.append({"stage": stage.id, **evidence, "entry_hash": ledger.append(run_id, stage.id, evidence)})
             break
         handler = handlers.get(stage.station)
@@ -95,6 +136,10 @@ def run_swarm(stages: list[Stage], input_value: object, handlers: dict[str, Call
         try:
             output = handler(value)
             output_hash = _hash(output)
+        except AccessBlocked:
+            evidence = {"station": stage.station, "action": stage.action, "status": "blocked_access", "input_sha256": input_hash, "error_type": "AccessBlocked"}
+            receipts.append({"stage": stage.id, **evidence, "entry_hash": ledger.append(run_id, stage.id, evidence)})
+            break
         except Exception as exc:
             evidence = {"station": stage.station, "action": stage.action, "status": "failed", "input_sha256": input_hash, "error_type": type(exc).__name__}
             receipts.append({"stage": stage.id, **evidence, "entry_hash": ledger.append(run_id, stage.id, evidence)})
