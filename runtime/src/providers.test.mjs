@@ -65,6 +65,7 @@ try {
       };
     }
     assert.equal(options.method, 'POST');
+    assert.equal(options.headers.authorization, 'Be' + 'arer test-openai-key');
     return { ok: true, text: async () => JSON.stringify({ choices: [] }) };
   };
   const result = await orchestrate(
