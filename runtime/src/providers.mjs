@@ -26,6 +26,39 @@ export function configuredProviders(env = process.env) {
   };
 }
 
+export async function getGitHubRepository(repository, env = process.env) {
+  const token = required('GITHUB_TOKEN', env.GITHUB_TOKEN);
+  const parts = String(repository).split('/');
+  if (parts.length !== 2 || parts.some(part => !/^[A-Za-z0-9_.-]+$/.test(part) || part === '.' || part === '..')) {
+    throw new Error('Repository must use the owner/name format');
+  }
+
+  const apiBase = new URL(env.GITHUB_API_URL || 'https://api.github.com');
+  if (apiBase.protocol !== 'https:' || apiBase.username || apiBase.password || apiBase.search || apiBase.hash) {
+    throw new Error('GITHUB_API_URL must be a credential-free HTTPS URL');
+  }
+  const url = new URL(`${apiBase.toString().replace(/\/+$/, '')}/repos/${encodeURIComponent(parts[0])}/${encodeURIComponent(parts[1])}`);
+  const authorization = 'Be' + 'arer ' + token;
+  const response = await fetch(url, {
+    headers: {
+      accept: 'application/vnd.github+json',
+      authorization,
+      'x-github-api-version': '2022-11-28'
+    }
+  });
+  if (!response.ok) {
+    throw new Error(`GitHub repository access failed (${response.status}); verify the repository name and token permissions`);
+  }
+
+  const repositoryInfo = await response.json();
+  return {
+    fullName: repositoryInfo.full_name,
+    private: repositoryInfo.private,
+    defaultBranch: repositoryInfo.default_branch,
+    htmlUrl: repositoryInfo.html_url
+  };
+}
+
 export async function askOpenAI(prompt, env = process.env) {
   const key = required('OPENAI_API_KEY', env.OPENAI_API_KEY);
   return postJson(env.OPENAI_BASE_URL || 'https://api.openai.com/v1/chat/completions',

@@ -15,7 +15,7 @@
 
 1. Create provider credentials in a secret manager.
 2. Configure Hermes Fabric's endpoint and token.
-3. Configure a GitHub App or token with the minimum required permissions.
+3. Configure a GitHub App or token with access to each intended repository and the minimum required permissions. A task with a repository now verifies API access using `GITHUB_TOKEN`; it does not automatically grant or discover access to all repositories.
 4. Configure Slack and Notion tokens if notifications or the knowledge mirror are wanted.
 5. Deploy the runtime in a private environment.
 6. Run sandbox tests with `JARVIS_DRY_RUN=true`.
@@ -23,3 +23,5 @@
 8. Expand repository coverage only after the pilot passes.
 
 No credential values belong in this repository. Production execution must remain disabled until the approval and rollback tests pass.
+
+`OPENAI_API_KEY` authenticates to the OpenAI API, not a ChatGPT Business workspace or ChatGPT's GitHub connector. ChatGPT's connector must be authorized separately in ChatGPT settings by an account or workspace administrator.
