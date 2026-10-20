@@ -1,0 +1,54 @@
+{
+  "schema": "jarvis.studio-economics.v1",
+  "currency": "USD",
+  "scenarios": [
+    {
+      "name": "No sales",
+      "assumptions": {
+        "fixed_cash_cost_minor": 6000,
+        "production_minutes": 240,
+        "hourly_value_minor": 2000,
+        "unit_price_minor": 900,
+        "per_unit_delivery_cash_cost_minor": 50,
+        "variable_fee_basis_points": 500,
+        "expected_units": 0
+      }
+    },
+    {
+      "name": "10 units",
+      "assumptions": {
+        "fixed_cash_cost_minor": 6000,
+        "production_minutes": 240,
+        "hourly_value_minor": 2000,
+        "unit_price_minor": 900,
+        "per_unit_delivery_cash_cost_minor": 50,
+        "variable_fee_basis_points": 500,
+        "expected_units": 10
+      }
+    },
+    {
+      "name": "25 units",
+      "assumptions": {
+        "fixed_cash_cost_minor": 6000,
+        "production_minutes": 240,
+        "hourly_value_minor": 2000,
+        "unit_price_minor": 900,
+        "per_unit_delivery_cash_cost_minor": 50,
+        "variable_fee_basis_points": 500,
+        "expected_units": 25
+      }
+    },
+    {
+      "name": "50 units",
+      "assumptions": {
+        "fixed_cash_cost_minor": 6000,
+        "production_minutes": 240,
+        "hourly_value_minor": 2000,
+        "unit_price_minor": 900,
+        "per_unit_delivery_cash_cost_minor": 50,
+        "variable_fee_basis_points": 500,
+        "expected_units": 50
+      }
+    }
+  ]
+}

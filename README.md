@@ -13,6 +13,8 @@ An auditable, provider-neutral assistant that coordinates work across OpenAI, Ge
 - Connector health checks that never reveal secrets
 - Command-line interface with JSON output for automations
 - One versioned Prompt #11 operating profile across all eight catalog workflows and the local Node task planner
+- Structured creative production packets with real local source drafts, dependency checks, and verified handoff files
+- Hypothetical production economics that separate cash costs from the value of production time
 - GitHub Actions tests and dependency review
 - Extension contract for GitHub, Hostinger, Slack, Zapier, and other connectors
 
@@ -88,6 +90,9 @@ jarvis workflows [--json]
 jarvis run WORKFLOW "INPUT" [--business-context PATH] [--allow-external] [--json]
 jarvis plan WORKFLOW "INPUT" [--business-context PATH] [--json]
 jarvis business-context PATH [--json]
+jarvis studio-plan BRIEF --output FRESH_DIRECTORY [--json]
+jarvis verify-studio-plan DIRECTORY [--json]
+jarvis studio-economics ASSUMPTIONS [--json]
 jarvis bundle RUN_ID [--json]
 jarvis verify-bundle PATH [--json]
 jarvis doctor [--json]
@@ -189,7 +194,7 @@ these local modules. See [the proposed workflow mappings](docs/PROPOSED_HOSTINGE
 [Hostinger adapter](docs/HERMES_MEMPALACE_HOSTINGER.md) and
 [funding review contract](docs/REFERRAL_CROSS_PLATFORM_INTEGRATION.md).
 
-## Creative studio production packets
+## Creative studio production
 
 The Evolutionary Evolutions Creative Creations Studios of Intergalactic Corporate
 Services LLC now has a fixed local configuration and a production-packet workflow.
@@ -209,6 +214,36 @@ do not resume it automatically. Cached studio runs reverify the packet and its
 retained manifest hash before reuse. Configuration changes produce a fresh run.
 See [the studio workflow](docs/CREATIVE_STUDIO_WORKFLOW.md) for the packet contract,
 offline verifier, intake fields and intended channel/workspace mappings.
+
+For a filled assignment and actual local drafts, the structured production planner
+creates a separate packet with source copies, exact source/parent hashes, the
+Prompt #11 and studio-config snapshots, a derived plan, and three local workspace
+handoff briefs. Changed sources and stale adaptations remain visible blockers.
+The included [workforce publishing pilot](examples/studio-workforce-pilot/README.md)
+contains an original Chapter 6 companion, narration, short-video script, video-book
+storyboard, six channel-copy drafts, and a reader-experiment proposal.
+
+```bash
+jarvis studio-plan examples/studio-workforce-pilot/production-brief.json \
+  --output /tmp/jarvis-workforce-pilot --json
+jarvis verify-studio-plan /tmp/jarvis-workforce-pilot --json
+jarvis studio-economics examples/studio-workforce-pilot/economics.json --json
+```
+
+Use a new output directory for each packet. `prepared_for_review` describes the
+declared local text evidence; release remains blocked. The verifier reconstructs
+the plan and handoffs, while retaining the limits of local hashes and untrusted
+review assertions. The commands run before Control Tower initialization and make
+no provider or account calls. See [the production contract](docs/STUDIO_PRODUCTION.md).
+
+The economics command evaluates supplied assumptions in USD cents, including
+whole-unit break-even counts and one-time labor opportunity cost. The pilot's
+four scenarios are illustrative, with no actual sales or approved spending.
+See [the calculation contract](docs/STUDIO_ECONOMICS.md). A dedicated Studio
+production check builds this public example and retains verified packet/scenario
+evidence in GitHub Actions; the separate public-metadata audit keeps its existing
+scope. No rendered media, live workspace synchronization, Hostinger change, or
+social release is established by these local checks.
 
 ```bash
 jarvis validate-workflows --json
