@@ -1,0 +1,24 @@
+name: Feature request
+description: Propose a safe, testable Jarvis capability
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+    validations:
+      required: true
+  - type: textarea
+    id: systems
+    attributes:
+      label: Systems and data involved
+    validations:
+      required: true
+  - type: dropdown
+    id: risk
+    attributes:
+      label: Highest action risk
+      options: [Read only, Draft only, External write, Destructive]
+    validations:
+      required: true

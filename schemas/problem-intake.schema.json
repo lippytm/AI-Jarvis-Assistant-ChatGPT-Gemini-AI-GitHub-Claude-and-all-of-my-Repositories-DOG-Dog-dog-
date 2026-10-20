@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lippytm.ai/schemas/problem-intake.schema.json",
+  "title": "Jarvis universal problem intake",
+  "type": "object",
+  "required": ["statement", "desired_outcome"],
+  "properties": {
+    "statement": {"type": "string", "minLength": 1},
+    "desired_outcome": {"type": "string", "minLength": 1},
+    "domain": {"type": "string", "default": "general"},
+    "evidence": {"type": "array", "items": {"type": "string"}},
+    "constraints": {"type": "array", "items": {"type": "string"}},
+    "stakeholders": {"type": "array", "items": {"type": "string"}},
+    "proposed_actions": {"type": "array", "items": {"type": "string"}},
+    "success_metric": {"type": "string"},
+    "deadline": {"type": "string"}
+  },
+  "additionalProperties": false
+}

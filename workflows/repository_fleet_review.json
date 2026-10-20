@@ -1,0 +1,20 @@
+{
+  "name": "Repository Fleet Review",
+  "description": "Inventory all accessible GitHub repositories and prepare a Jarvis review.",
+  "steps": [
+    {"id": "github_repositories", "type": "github_inventory", "owner": "lippytm"},
+    {
+      "id": "jarvis_review",
+      "type": "ai",
+      "provider": "chatgpt",
+      "system": "You are the repository portfolio analyst for AI Jarvis Assistant.",
+      "prompt": "Review this GitHub repository inventory. Group likely active, stale, duplicate, and integration candidates. Do not invent repository contents.\n{{steps.github_repositories.output}}"
+    },
+    {
+      "id": "github_handoff",
+      "type": "handoff",
+      "destination": "github",
+      "content": "# Repository fleet review draft\n\n{{steps.jarvis_review.output}}"
+    }
+  ]
+}

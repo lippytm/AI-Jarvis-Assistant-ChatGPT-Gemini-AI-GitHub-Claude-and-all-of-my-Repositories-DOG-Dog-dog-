@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0",
+  "sources": [
+    {"id": "nist-ssdf-1.1", "url": "https://csrc.nist.gov/pubs/sp/800/218/final", "scope": "secure software development"},
+    {"id": "nist-ai-rmf", "url": "https://www.nist.gov/itl/ai-risk-management-framework", "scope": "AI governance and risk"},
+    {"id": "nist-csf-2.0", "url": "https://www.nist.gov/cyberframework", "scope": "govern, identify, protect, detect, respond, recover"},
+    {"id": "slsa", "url": "https://slsa.dev/spec/", "scope": "software supply-chain integrity"},
+    {"id": "owasp-asvs", "url": "https://owasp.org/www-project-application-security-verification-standard/", "scope": "application security verification"},
+    {"id": "google-sre-error-budgets", "url": "https://sre.google/workbook/error-budget-policy/", "scope": "reliability and change control"}
+  ],
+  "controls": [
+    {"id": "PRE-001", "title": "Measurable outcome and non-goals", "tags": ["core"], "viability_dimension": "clear_outcome", "evidence": "Accepted success metric and explicit exclusions"},
+    {"id": "PRE-002", "title": "Evidence and assumption ledger", "tags": ["core", "ai"], "viability_dimension": "evidence", "evidence": "Sources, freshness, confidence, assumptions, and contradictions"},
+    {"id": "PRE-003", "title": "Named owner and separation of duties", "tags": ["core", "security"], "viability_dimension": "owner", "evidence": "Owner, approver, and prohibited self-approval"},
+    {"id": "PRE-004", "title": "Dependency and interface inventory", "tags": ["core", "software"], "viability_dimension": "dependencies", "evidence": "Versioned upstream/downstream contracts"},
+    {"id": "PRE-005", "title": "Logs, metrics, alerts, and provenance", "tags": ["core", "reliability"], "viability_dimension": "observability", "evidence": "Diagnostic signals and retention policy"},
+    {"id": "PRE-006", "title": "Baseline and deterministic verification", "tags": ["core", "software"], "viability_dimension": "testability", "evidence": "Reproducible tests and known baseline"},
+    {"id": "PRE-007", "title": "Isolated canary or sandbox", "tags": ["core", "reliability"], "viability_dimension": "reversibility", "evidence": "Limited blast radius and promotion rule"},
+    {"id": "PRE-008", "title": "Tested rollback and recovery", "tags": ["core", "security", "reliability"], "viability_dimension": "rollback", "evidence": "Restoration steps and recovery test result"},
+    {"id": "PRE-009", "title": "Budgets and circuit breakers", "tags": ["core", "ai", "reliability"], "viability_dimension": "cost_cap", "evidence": "Time, token, compute, financial, and retry limits"},
+    {"id": "PRE-010", "title": "Threat model and least privilege", "tags": ["core", "security", "software"], "viability_dimension": "security_privacy", "evidence": "Data classification, abuse cases, secret scanning, and minimum access"},
+    {"id": "PRE-011", "title": "Human oversight and contestability", "tags": ["ai"], "viability_dimension": "owner", "evidence": "Human review, override, appeal, and incident escalation"},
+    {"id": "PRE-012", "title": "Build provenance and dependency integrity", "tags": ["software", "security"], "viability_dimension": "security_privacy", "evidence": "Pinned dependencies, provenance, reviews, and verified artifacts"}
+  ]
+}

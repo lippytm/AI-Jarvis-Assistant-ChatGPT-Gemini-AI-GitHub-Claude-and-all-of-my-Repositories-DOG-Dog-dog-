@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lippytm.ai/schemas/viability-design.schema.json",
+  "title": "Jarvis preventive viability design",
+  "type": "object",
+  "required": ["name"],
+  "properties": {
+    "name": {"type": "string", "minLength": 1},
+    "clear_outcome": {},
+    "evidence": {},
+    "owner": {},
+    "dependencies": {},
+    "observability": {},
+    "testability": {},
+    "reversibility": {},
+    "rollback": {},
+    "cost_cap": {},
+    "security_privacy": {},
+    "conflicts": {"type": "array", "items": {"type": "string"}},
+    "assumptions": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": true
+}
