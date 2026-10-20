@@ -1,5 +1,6 @@
 {
   "name": "Multi-AI Business Review",
+  "prompt_profile": {"id": "P-011-E6C-001", "revision": "repository-1"},
   "description": "Research, analyze, challenge, synthesize, and draft workspace handoffs.",
   "steps": [
     {

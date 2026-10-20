@@ -3,9 +3,9 @@ name: Jarvis runtime check
 on:
   push:
     branches: [main]
-    paths: ['runtime/**']
+    paths: ['runtime/**', 'config/prompt-11-profile.json', '.github/workflows/jarvis-runtime-check.yml']
   pull_request:
-    paths: ['runtime/**']
+    paths: ['runtime/**', 'config/prompt-11-profile.json', '.github/workflows/jarvis-runtime-check.yml']
 
 permissions:
   contents: read

@@ -19,6 +19,7 @@ from .problem_intake import Problem, SolvabilityEngine
 from .viability import ViabilityEngine
 from .prevention import PreventionLibrary
 from .outcomes import OutcomeEvidence
+from .business_context import load_business_context
 
 
 def _emit(value: Any, as_json: bool) -> None:
@@ -53,10 +54,17 @@ def parser() -> argparse.ArgumentParser:
                      help="Ignore an existing idempotent run and execute again")
     run.add_argument("--allow-sensitive", action="store_true",
                      help="Allow detected credentials in input (strongly discouraged)")
+    run.add_argument("--business-context", metavar="PATH",
+                     help="Add an allowed projection of a local owner business record as task data")
     plan = commands.add_parser("plan", help="Preview a workflow without executing it")
     plan.add_argument("workflow")
     plan.add_argument("input")
     plan.add_argument("--json", action="store_true")
+    plan.add_argument("--business-context", metavar="PATH",
+                      help="Identify a local business-context projection without executing steps")
+    business_context = commands.add_parser("business-context", help="Export sanitized local owner business facts")
+    business_context.add_argument("path", metavar="PATH")
+    business_context.add_argument("--json", action="store_true")
     validate = commands.add_parser("validate-workflows", help="Validate every workflow definition")
     validate.add_argument("--json", action="store_true")
     approvals = commands.add_parser("approvals", help="List approval requests")
@@ -105,6 +113,9 @@ def parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
     try:
+        if args.command == "business-context":
+            _emit(load_business_context(args.path).as_dict(), args.json)
+            return 0
         tower = ControlTower(Settings.from_env())
         if args.command == "health":
             _emit(tower.health(), args.json)
@@ -126,16 +137,17 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "run":
             result = WorkflowRunner(tower).run(args.workflow, args.input,
                                                 args.allow_external, args.force,
-                                                args.allow_sensitive)
+                                                args.allow_sensitive,
+                                                business_context=args.business_context)
             _emit(result, args.json)
             return 0 if result["status"] == "completed" else 1
         elif args.command == "plan":
-            _emit(WorkflowRunner(tower).plan(args.workflow, args.input), args.json)
+            _emit(WorkflowRunner(tower).plan(args.workflow, args.input,
+                                             business_context=args.business_context), args.json)
         elif args.command == "validate-workflows":
-            result = WorkflowRunner(tower).validate_all()
-            valid = bool(result) and not any(result.values())
-            _emit({"valid": valid, "workflows": result}, args.json)
-            return 0 if valid else 1
+            result = WorkflowRunner(tower).validate_catalog()
+            _emit(result, args.json)
+            return 0 if result["valid"] else 1
         elif args.command == "approvals":
             _emit(ApprovalQueue().list(args.status), args.json)
         elif args.command == "approve":

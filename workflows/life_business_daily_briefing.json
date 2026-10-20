@@ -1,5 +1,6 @@
 {
   "name": "AI Jarvis Life Business Daily Briefing",
+  "prompt_profile": {"id": "P-011-E6C-001", "revision": "repository-1"},
   "description": "Creates a bounded daily decision brief across the seven Life/Business lanes without taking consequential action.",
   "steps": [
     {

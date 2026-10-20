@@ -13,17 +13,23 @@ from uuid import uuid4
 
 from .hermes import MemPalace
 
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 EXPECTED = {
-    "7figures-customer": ("customer_referral", "http://www.7figurescredit.com?a_aid=lippytm"),
-    "7figures-partner": ("partner_recruitment", "http://join.7figurespartners.com/?a_aid=lippytm"),
-    "lendtrack-partner": ("partner_recruitment", "http://lendtrack.ai/join/lippytmai"),
+    "7figures-customer": ("customer_referral", "http://www.7figurescredit.com?a_aid=lippytm",
+                         "https://www.7figurescredit.com?a_aid=lippytm", []),
+    "7figures-partner": ("partner_recruitment", "http://7figurespartners.com?a_lippytm",
+                        "https://7figurespartners.com?a_lippytm",
+                        ["http://join.7figurespartners.com/?a_aid=lippytm"]),
+    "lendtrack-partner": ("partner_recruitment", "http://lendtrack.ai/join/lippytmai",
+                         "https://lendtrack.ai/join/lippytmai", []),
+    "getbizfunds-business": ("business_funding_site", "lippytmai.getbizfunds.com",
+                            "https://lippytmai.getbizfunds.com", []),
 }
 GATES = frozenset({"https_destination", "account_membership", "referral_attribution",
                    "program_terms", "public_copy", "owner_release"})
 ROOT_KEYS = {"schema_version", "mode", "network_enabled", "auto_publish", "spend_authorized", "programs"}
 PROGRAM_KEYS = {"id", "purpose", "original_url", "https_candidate_url", "link_check",
-                "gates", "commission_rate", "payout_status"}
+                "gates", "commission_rate", "payout_status", "prior_original_urls"}
 
 
 def digest(value: object) -> str:
@@ -32,16 +38,16 @@ def digest(value: object) -> str:
 
 
 def validate_registry(data: object) -> None:
-    """Validate this three-program pilot, not arbitrary affiliate programs."""
+    """Validate the four exact current routes and locked prior attribution evidence."""
     if not isinstance(data, dict) or set(data) != ROOT_KEYS:
         raise ValueError("Invalid registry fields")
-    if data["schema_version"] != "1.0.0" or data["mode"] != "draft_only":
+    if data["schema_version"] != "1.1.0" or data["mode"] != "draft_only":
         raise ValueError("Unsupported schema or non-draft mode")
     if any(data[key] is not False for key in ("network_enabled", "auto_publish", "spend_authorized")):
         raise ValueError("Network, publication and spending must remain disabled")
     programs = data["programs"]
     if not isinstance(programs, list) or len(programs) != len(EXPECTED):
-        raise ValueError("Expected exactly three separate referral programs")
+        raise ValueError("Expected exactly four separate funding routes")
     seen = set()
     for program in programs:
         if not isinstance(program, dict) or set(program) != PROGRAM_KEYS:
@@ -50,11 +56,13 @@ def validate_registry(data: object) -> None:
         if not isinstance(identity, str) or identity not in EXPECTED or identity in seen:
             raise ValueError("Unknown or duplicate program identifier")
         seen.add(identity)
-        purpose, original = EXPECTED[identity]
+        purpose, original, https_candidate, prior_urls = EXPECTED[identity]
         if program["purpose"] != purpose or program["original_url"] != original:
             raise ValueError("Referral purpose or owner-supplied URL changed")
-        if program["https_candidate_url"] != "https:" + original[5:]:
-            raise ValueError("HTTPS candidate must preserve host, path and attribution")
+        if program["https_candidate_url"] != https_candidate:
+            raise ValueError("HTTPS candidate must preserve the exact intended destination and attribution")
+        if program["prior_original_urls"] != prior_urls:
+            raise ValueError("Prior route evidence must remain separate and unchanged")
         gates = program["gates"]
         if not isinstance(gates, dict) or set(gates) != GATES:
             raise ValueError("Missing or unexpected review gates")
@@ -78,6 +86,7 @@ def build_review(data: object, ledger: MemPalace | None = None) -> dict:
         "programs": [{"id": p["id"], "purpose": p["purpose"],
                       "original_url": p["original_url"],
                       "https_candidate_url": p["https_candidate_url"],
+                      "prior_original_urls": list(p["prior_original_urls"]),
                       "asserted_gates": dict(p["gates"]),
                       "unresolved_gates": sorted(k for k, v in p["gates"].items() if v != "verified")}
                      for p in data["programs"]],

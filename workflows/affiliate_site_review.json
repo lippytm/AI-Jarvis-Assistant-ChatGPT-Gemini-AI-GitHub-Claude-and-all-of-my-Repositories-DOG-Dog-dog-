@@ -1,5 +1,6 @@
 {
   "name": "affiliate_site_review",
+  "prompt_profile": {"id": "P-011-E6C-001", "revision": "repository-1"},
   "description": "Draft a ChatGPT Business review handoff for aievolutionaryevolutions.com and request owner approval before publication.",
   "version": "1.0.0",
   "steps": [

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from collections.abc import Iterator
+from contextlib import closing, contextmanager
 from pathlib import Path
 from typing import Any
 
@@ -16,10 +18,12 @@ class Ledger:
         path.parent.mkdir(parents=True, exist_ok=True)
         self._initialize()
 
-    def _connect(self) -> sqlite3.Connection:
-        db = sqlite3.connect(self.path)
-        db.row_factory = sqlite3.Row
-        return db
+    @contextmanager
+    def _connect(self) -> Iterator[sqlite3.Connection]:
+        # SQLite's transaction context does not close the connection itself.
+        with closing(sqlite3.connect(self.path)) as db, db:
+            db.row_factory = sqlite3.Row
+            yield db
 
     def _initialize(self) -> None:
         with self._connect() as db:

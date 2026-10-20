@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "mode": "draft_only",
   "network_enabled": false,
   "auto_publish": false,
@@ -10,6 +10,7 @@
       "purpose": "customer_referral",
       "original_url": "http://www.7figurescredit.com?a_aid=lippytm",
       "https_candidate_url": "https://www.7figurescredit.com?a_aid=lippytm",
+      "prior_original_urls": [],
       "link_check": "fetch_failed_in_this_session",
       "gates": {
         "https_destination": "unverified",
@@ -25,8 +26,9 @@
     {
       "id": "7figures-partner",
       "purpose": "partner_recruitment",
-      "original_url": "http://join.7figurespartners.com/?a_aid=lippytm",
-      "https_candidate_url": "https://join.7figurespartners.com/?a_aid=lippytm",
+      "original_url": "http://7figurespartners.com?a_lippytm",
+      "https_candidate_url": "https://7figurespartners.com?a_lippytm",
+      "prior_original_urls": ["http://join.7figurespartners.com/?a_aid=lippytm"],
       "link_check": "fetch_failed_in_this_session",
       "gates": {
         "https_destination": "unverified",
@@ -44,6 +46,25 @@
       "purpose": "partner_recruitment",
       "original_url": "http://lendtrack.ai/join/lippytmai",
       "https_candidate_url": "https://lendtrack.ai/join/lippytmai",
+      "prior_original_urls": [],
+      "link_check": "fetch_failed_in_this_session",
+      "gates": {
+        "https_destination": "unverified",
+        "account_membership": "unverified",
+        "referral_attribution": "unverified",
+        "program_terms": "unverified",
+        "public_copy": "unverified",
+        "owner_release": "unverified"
+      },
+      "commission_rate": null,
+      "payout_status": "unverified"
+    },
+    {
+      "id": "getbizfunds-business",
+      "purpose": "business_funding_site",
+      "original_url": "lippytmai.getbizfunds.com",
+      "https_candidate_url": "https://lippytmai.getbizfunds.com",
+      "prior_original_urls": [],
       "link_check": "fetch_failed_in_this_session",
       "gates": {
         "https_destination": "unverified",

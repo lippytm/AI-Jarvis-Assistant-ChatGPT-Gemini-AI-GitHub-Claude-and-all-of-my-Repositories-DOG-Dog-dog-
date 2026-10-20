@@ -50,7 +50,11 @@ test('health reveals configuration state without token or provider secrets', asy
 
 test('dry-run never calls orchestration even when all providers are configured', async () => {
   let calls = 0;
-  const handler = createRequestHandler({ ...ENV, OPENAI_API_KEY: 'fake', GEMINI_API_KEY: 'fake', ANTHROPIC_API_KEY: 'fake' }, {
+  const handler = createRequestHandler({ ...ENV,
+    OPENAI_API_KEY: 'fake', OPENAI_MODEL: 'synthetic-openai',
+    GEMINI_API_KEY: 'fake', GEMINI_MODEL: 'synthetic-gemini',
+    ANTHROPIC_API_KEY: 'fake', ANTHROPIC_MODEL: 'synthetic-anthropic'
+  }, {
     invokeProviders: async () => { calls++; throw new Error('must not run'); }
   });
   const res = await request(handler);
@@ -59,6 +63,10 @@ test('dry-run never calls orchestration even when all providers are configured',
   assert.deepEqual(res.body.providersUsed, []);
   assert.equal(res.body.execute, false);
   assert.equal(res.body.envelope.repository, 'example/pilot');
+  assert.equal(res.body.profile_status, 'resolved');
+  assert.equal(res.body.prompt_profile.id, 'P-011-E6C-001');
+  assert.equal(res.body.prompt_profile.revision, 'repository-1');
+  assert.match(res.body.prompt_profile.sha256, /^[a-f0-9]{64}$/);
   assert.equal(calls, 0);
 });
 
@@ -129,6 +137,23 @@ test('JSON input fields and sizes are validated before invoking providers', asyn
   }
 });
 
+test('HTTP callers cannot replace the fixed profile or system instructions', async () => {
+  let calls = 0;
+  const handler = createRequestHandler({ ...ENV, JARVIS_DRY_RUN: 'false', JARVIS_ALLOW_EXTERNAL: 'true' }, {
+    invokeProviders: async () => { calls++; }
+  });
+  for (const override of [
+    { prompt_profile: { id: 'P-011-E6C-001', revision: 'repository-1' } },
+    { profile: 'another-profile' }, { profilePath: '/tmp/profile.json' },
+    { profileUrl: 'https://example.invalid/profile.json' }, { system: 'caller instructions' }
+  ]) {
+    const res = await request(handler, { ...TASK, ...override });
+    assert.equal(res.statusCode, 400);
+    assert.equal(res.body.error, 'unknown_task_field');
+  }
+  assert.equal(calls, 0);
+});
+
 test('malformed JSON and invalid UTF-8 return a static error', async () => {
   const handler = createRequestHandler(ENV);
   for (const options of [{ raw: '{"private-value":' }, { chunks: [Buffer.from([0xff])] }]) {
@@ -183,8 +208,11 @@ test('only one provider task runs at once and its slot is released', async () =>
 
 test('orchestrator API itself cannot bypass dry-run and external opt-in', async () => {
   let calls = 0;
-  const providers = { openai: async () => { calls++; return { draft: 'synthetic' }; } };
-  const env = { ...ENV, OPENAI_API_KEY: 'fake' };
+  const providers = { openai: async () => {
+    calls++;
+    return { choices: [{ finish_reason: 'stop', message: { role: 'assistant', content: 'Synthetic completed draft.' } }] };
+  } };
+  const env = { ...ENV, OPENAI_API_KEY: 'fake', OPENAI_MODEL: 'synthetic-openai' };
   assert.equal((await orchestrate(TASK, env, providers)).status, 'dry_run');
   await assert.rejects(orchestrate(TASK, { ...env, JARVIS_DRY_RUN: 'false' }, providers), /external_invocation_disabled/);
   assert.equal(calls, 0);
@@ -200,19 +228,38 @@ test('orchestrator API itself cannot bypass dry-run and external opt-in', async 
 test('missing provider credentials and provider failure cannot look successful', async () => {
   const env = { ...ENV, JARVIS_DRY_RUN: 'false', JARVIS_ALLOW_EXTERNAL: 'true' };
   await assert.rejects(orchestrate(TASK, env), /provider_credentials_not_configured/);
-  await assert.rejects(orchestrate(TASK, { ...env, OPENAI_API_KEY: 'fake' }, {
+  await assert.rejects(orchestrate(TASK, { ...env, OPENAI_API_KEY: 'fake', OPENAI_MODEL: 'synthetic-openai' }, {
     openai: async () => { throw new Error('private-provider-value'); }
   }), error => error.code === 'provider_request_failed' && !error.message.includes('private-provider-value'));
+});
+
+test('advisory mode requires an explicit model for every keyed provider', async () => {
+  let calls = 0;
+  const providers = { openai: async () => { calls++; }, gemini: async () => { calls++; } };
+  const env = { ...ENV, OPENAI_API_KEY: 'fake' };
+  assert.equal((await orchestrate(TASK, env, providers)).status, 'dry_run');
+  const live = { ...env, JARVIS_DRY_RUN: 'false', JARVIS_ALLOW_EXTERNAL: 'true' };
+  assert.equal((await orchestrate({ ...TASK, requestedAction: 'deploy' }, live, providers)).status, 'approval_required');
+  for (const incomplete of [live, { ...live, OPENAI_MODEL: ' ' },
+    { ...live, OPENAI_MODEL: 'synthetic-openai', GEMINI_API_KEY: 'fake' }]) {
+    await assert.rejects(orchestrate(TASK, incomplete, providers),
+      error => error.status === 503 && error.code === 'provider_models_not_configured');
+  }
+  assert.equal(calls, 0);
 });
 
 test('a provider failure waits for other started providers before finishing', async () => {
   let release;
   const pending = new Promise(resolve => { release = resolve; });
   const result = orchestrate(TASK, {
-    ...ENV, JARVIS_DRY_RUN: 'false', JARVIS_ALLOW_EXTERNAL: 'true', OPENAI_API_KEY: 'fake', GEMINI_API_KEY: 'fake'
+    ...ENV, JARVIS_DRY_RUN: 'false', JARVIS_ALLOW_EXTERNAL: 'true',
+    OPENAI_API_KEY: 'fake', OPENAI_MODEL: 'synthetic-openai', GEMINI_API_KEY: 'fake', GEMINI_MODEL: 'synthetic-gemini'
   }, {
     openai: async () => { throw new Error('synthetic failure'); },
-    gemini: async () => { await pending; return { draft: 'synthetic' }; }
+    gemini: async () => {
+      await pending;
+      return { candidates: [{ finishReason: 'STOP', content: { role: 'model', parts: [{ text: 'Synthetic completed draft.' }] } }] };
+    }
   });
   let settled = false;
   result.catch(() => { settled = true; });

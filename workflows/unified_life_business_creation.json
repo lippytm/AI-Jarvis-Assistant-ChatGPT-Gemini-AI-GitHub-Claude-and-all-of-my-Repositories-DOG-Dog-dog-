@@ -1,5 +1,6 @@
 {
   "name": "Unified Life Business Creation Cycle",
+  "prompt_profile": {"id": "P-011-E6C-001", "revision": "repository-1"},
   "description": "Gemini researches and designs, Claude challenges, ChatGPT synthesizes, GitHub receives a canonical draft, and Hostinger receives a deployment draft after owner review.",
   "steps": [
     {

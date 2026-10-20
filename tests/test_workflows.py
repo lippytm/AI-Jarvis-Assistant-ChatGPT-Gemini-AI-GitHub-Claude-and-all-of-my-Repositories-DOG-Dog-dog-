@@ -21,7 +21,8 @@ class WorkflowTests(unittest.TestCase):
              "content": "Result: {{steps.draft.output}}"}]}
         (self.workflow_dir / "test.json").write_text(json.dumps(definition), encoding="utf-8")
         tower = ControlTower(Settings("mock", root / "ledger.sqlite3", 5))
-        self.runner = WorkflowRunner(tower, self.workflow_dir, root / "outbox", root / "runs")
+        self.runner = WorkflowRunner(tower, self.workflow_dir, root / "outbox", root / "runs",
+                                     allow_unprofiled=True)
 
     def tearDown(self):
         self.temp.cleanup()

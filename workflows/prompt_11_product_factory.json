@@ -1,6 +1,7 @@
 {
   "name": "Prompt #11 Product Factory",
-  "description": "Turn one business concept into researched, challenged, production-ready product documentation.",
+  "prompt_profile": {"id": "P-011-E6C-001", "revision": "repository-1"},
+  "description": "Turn one business concept into researched and challenged draft product documentation, then queue owner review.",
   "steps": [
     {
       "id": "market_research",
