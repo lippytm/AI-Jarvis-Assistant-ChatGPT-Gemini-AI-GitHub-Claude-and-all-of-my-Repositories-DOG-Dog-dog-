@@ -50,6 +50,15 @@ def _identifier(value: Any) -> str:
     return value
 
 
+def _labels(value: Any) -> list[str]:
+    if not isinstance(value, list) or not 1 <= len(value) <= 16:
+        raise _invalid()
+    labels = [_text(item, 256) for item in value]
+    if len(set(labels)) != len(labels):
+        raise _invalid()
+    return labels
+
+
 def _unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     result: dict[str, Any] = {}
     for key, value in pairs:
@@ -162,6 +171,17 @@ def load_business_context(path: Path | str) -> BusinessContext:
             "source_qualifier": _text(baseline.get("domain_basis")),
         },
     }
+    if "creative_studio" in value:
+        studio = _object(value["creative_studio"])
+        projection["creative_studio"] = {
+            "brand_name": _text(studio.get("brand_name"), 256),
+            "formats": _labels(studio.get("formats")),
+            "purposes": _labels(studio.get("purposes")),
+            "intended_distribution_channels": _labels(studio.get("intended_distribution_channels")),
+            "intended_ai_workspaces": _labels(studio.get("intended_ai_workspaces")),
+            "declaration_status": "owner_declared_intended_use",
+            "connection_status": "not_asserted_by_this_context",
+        }
     encoded = json.dumps(projection, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
     if find_sensitive(encoded):
         # A credential misplaced in an allowed field must not become an export.

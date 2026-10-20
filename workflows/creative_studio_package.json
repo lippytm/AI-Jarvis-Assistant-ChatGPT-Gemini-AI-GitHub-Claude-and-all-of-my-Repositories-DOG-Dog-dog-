@@ -1,0 +1,23 @@
+{
+  "name": "Creative Studio Template Package",
+  "prompt_profile": {"id": "P-011-E6C-001", "revision": "repository-1"},
+  "description": "Prepare local templates for four studio formats, six distribution reviews and three AI workspace handoff briefs, then request owner review. Always intake_required; no media rendering, external handoff or publication.",
+  "steps": [
+    {
+      "id": "studio_templates",
+      "type": "studio_package"
+    },
+    {
+      "id": "github_review_draft",
+      "type": "handoff",
+      "destination": "github-studio-review-draft",
+      "content": "# Creative Studio review handoff\n\nRun: {{run_id}}\n\nPackage: {{steps.studio_templates.package_path}}\nManifest SHA-256: {{steps.studio_templates.manifest_sha256}}\nPackage status: intake_required; template_only=true.\n\nSupply the substantive topic/campaign, audience, assets, source rights, lengths, destination accounts, independent reviewer and release scope. Review the original packet before creating a separate working copy. These are local templates; no media was rendered, no workspace was contacted and no content was published."
+    },
+    {
+      "id": "owner_studio_review",
+      "type": "approval",
+      "action": "review_creative_studio_template_packet",
+      "summary": "Review the local creative studio intake/template packet and its manifest before choosing a substantive production brief or an external handoff.\n\nPackage: {{steps.studio_templates.package_path}}\nManifest SHA-256: {{steps.studio_templates.manifest_sha256}}\n\nThis request does not certify content, grant platform access, start media generation or publish. Any later production or release must identify its actual sources, assets, destination and authorized scope."
+    }
+  ]
+}

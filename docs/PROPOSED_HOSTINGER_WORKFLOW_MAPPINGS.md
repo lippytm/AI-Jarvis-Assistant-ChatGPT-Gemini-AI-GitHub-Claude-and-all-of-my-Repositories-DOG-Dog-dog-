@@ -76,7 +76,7 @@ All 24 review checks remain unresolved in the draft registry.
 ## Shared instructions, context and evidence
 
 The repository Prompt #11 operating profile, `P-011-E6C-001` revision
-`repository-1`, supplies shared guidance to the seven shipping Python workflows
+`repository-1`, supplies shared guidance to the eight shipping Python workflows
 and the local Node task planner. Plans/results identify its revision and exact
 file hash. This gives the covered local runtimes an explicit common instruction
 source; it does not connect every external assistant or synchronize remote work.

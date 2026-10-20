@@ -1,0 +1,13 @@
+{
+  "schema": "jarvis.creative-studio.v1",
+  "id": "evolutionary-evolutions-creative-creations-studios",
+  "revision": "repository-1",
+  "brand_name": "The Evolutionary Evolutions Creative Creations Studios of Intergalactic Corporate Services LLC",
+  "operator_legal_name": "Intergalactic Corporate Services LLC",
+  "formats": ["Videos", "eBooks", "Audiobooks", "Video Books"],
+  "purposes": ["Ad Copy", "Affiliate Program Marketing", "Educational", "Entertainment", "Business of Businesses Systems of Systems"],
+  "intended_distribution_channels": ["Facebook", "LinkedIn", "Instagram", "Threads", "SubStack", "Hostinger.com"],
+  "intended_ai_workspaces": ["ChatGPT Business", "Gemini AI", "Claude"],
+  "declaration_status": "owner_declared_intended_use",
+  "connection_status": "not_asserted_by_this_context"
+}

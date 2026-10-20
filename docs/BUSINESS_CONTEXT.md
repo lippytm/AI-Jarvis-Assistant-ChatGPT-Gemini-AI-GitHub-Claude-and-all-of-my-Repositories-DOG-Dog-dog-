@@ -2,8 +2,8 @@
 
 The Python workflow runner can project a private owner record into a small pack
 of business facts and supply that same pack as task data to each executed AI
-step. This is an optional local input. It does not change Prompt #11, the seven
-registered workflow definitions, their role instructions, or any approval and
+step. This is an optional local input. It does not change Prompt #11,
+the registered workflow definitions, their role instructions, or any approval and
 execution gate.
 
 ## Export a reusable pack
@@ -33,6 +33,7 @@ Only these facts are copied:
 | `funding_channels[].id`, `owner_supplied_value`, `owner_described_role` | Funding channel identifiers, exact supplied values and described roles |
 | `prior_project_baseline.canonical_website_domain`, `funding_gateway_path` | Prior canonical domain and gateway facts |
 | `prior_project_baseline.domain_basis` | `source_qualifier`, preserving the prior evidence qualification |
+| Optional `creative_studio` fields listed below | Owner-declared studio brand, formats, purposes and intended channels |
 
 The pack also carries the fixed owner-reported verification status. Funding
 values retain their exact spelling, casing, referral parameters and surrounding
@@ -40,7 +41,7 @@ spaces. The projector does not substitute an earlier repository value, resolve a
 URL, verify attribution, or infer a partnership or commission arrangement.
 
 Tax identifiers, tax documents, private administration fields, account and
-application data, requested account connections, approval-like booleans and all
+application data, account authorization claims, approval-like booleans and all
 other unlisted fields are excluded. The implementation constructs new allowed
 objects; it does not export a redacted copy of the full private record. A
 credential recognized by the existing sensitive-data scanner in an allowed
@@ -52,6 +53,68 @@ invalid required fields and duplicate funding IDs fail with static errors.
 There may be at most 16 funding channels. Strings are bounded, and formation dates
 must be valid `YYYY-MM-DD` dates. Validation establishes the accepted data format;
 it does not independently verify company formation or domain ownership.
+
+## Optional creative studio
+
+The private source may include this optional declaration. The studio name is a
+brand supplied by the owner; it does not replace `business.legal_name` or establish
+a separately verified legal entity.
+
+```json
+{
+  "creative_studio": {
+    "brand_name": "The Evolutionary Evolutions Creative Creations Studios of Intergalactic Corporate Services LLC",
+    "formats": ["Videos", "eBooks", "Audiobooks", "Video Books"],
+    "purposes": [
+      "Ad Copy",
+      "Affiliate Program Marketing",
+      "Educational",
+      "Entertainment",
+      "Business of Businesses Systems of Systems"
+    ],
+    "intended_distribution_channels": [
+      "Facebook", "LinkedIn", "Instagram", "Threads", "SubStack", "Hostinger.com"
+    ],
+    "intended_ai_workspaces": ["ChatGPT Business", "Gemini AI", "Claude"]
+  }
+}
+```
+
+The projector copies only those five fields and adds two fixed qualifications:
+
+```json
+{
+  "declaration_status": "owner_declared_intended_use",
+  "connection_status": "not_asserted_by_this_context"
+}
+```
+
+The distribution list describes intended publishing or hosting destinations.
+The AI-workspace list describes intended workspaces. These labels are task data,
+not adapter IDs, authenticated accounts, account permissions, or evidence of a
+live handoff. Declaring ChatGPT Business does not configure the OpenAI API adapter;
+declaring Hostinger.com does not verify an account, domain, DNS setup or deployment.
+Source claims such as `authenticated`, `approved`, or a different
+`connection_status` cannot change the fixed qualifications or execution gates.
+Unlisted nested studio fields, including tax, private administration and account
+data, are excluded from the projection and its hash.
+
+When `creative_studio` is present, all five declaration fields are required. The
+brand name must be nonblank and at most 256 characters. Each list must contain
+1–16 nonblank strings of at most 256 characters each; exact duplicate strings
+within one list are rejected. Accepted labels retain their spelling, casing,
+Unicode, order and surrounding spaces. The existing control-character,
+malformed-input and recognized-credential checks also apply. An explicit `null`
+or incomplete studio object is invalid. The format is a bounded owner declaration;
+it does not validate or activate a platform or render the named media formats.
+
+If the field is omitted, the earlier projection bytes, hash and behavior remain
+unchanged. When present, the sanitized studio data participates in the existing
+canonical hash and workflow cache identity, and reaches each executed AI step
+through the same task-data path. Changing an allowed label or list order changes
+the hash; changing only excluded private or authorization fields does not. No new
+CLI option, system instruction, workflow definition or account connection is
+introduced by this optional projection field.
 
 ## Use the facts in a plan or run
 
@@ -127,6 +190,11 @@ unchanged exact funding values, absence of private data in exports/prompts/saved
 reports, canonical hashing and cache behavior, CLI export/flags, no provider or
 network calls during projection and planning, and retained system, approval,
 external opt-in, sensitive-input and call-budget gates.
+Studio coverage also checks the pre-extension bytes/hash, exact declared labels,
+fixed connection qualifications, nested private-field exclusion, bounded invalid
+inputs, immutable snapshots, and cache changes for studio facts while retaining the
+same execution gates. Studio names and platform labels in these tests are public
+declarations; all private values remain synthetic.
 
 ```sh
 PYTHONPATH=src python -m unittest discover -s tests -p 'test_business_context.py' -v

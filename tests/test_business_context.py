@@ -52,6 +52,18 @@ def synthetic_record():
     }
 
 
+def studio_declaration():
+    """Public owner-declared studio labels, with no private account information."""
+    return {
+        "brand_name": "The Evolutionary Evolutions Creative Creations Studios of Intergalactic Corporate Services LLC",
+        "formats": ["Videos", "eBooks", "Audiobooks", "Video Books"],
+        "purposes": ["Ad Copy", "Affiliate Program Marketing", "Educational", "Entertainment",
+                     "Business of Businesses Systems of Systems"],
+        "intended_distribution_channels": ["Facebook", "LinkedIn", "Instagram", "Threads", "SubStack", "Hostinger.com"],
+        "intended_ai_workspaces": ["ChatGPT Business", "Gemini AI", "Claude"],
+    }
+
+
 class BusinessContextTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
@@ -72,6 +84,18 @@ class BusinessContextTests(unittest.TestCase):
 
     def save(self):
         self.path.write_text(json.dumps(self.value), encoding="utf-8")
+
+    def add_studio(self):
+        self.value["creative_studio"] = {
+            **studio_declaration(),
+            "tax_identifier": {"type": "EIN", "value": FAKE_TAX_IDENTIFIER},
+            "private_admin": PRIVATE_MARKER,
+            "account_data": {"token": "sk-" + "SYNTHETICONLY" * 4},
+            "authenticated": True, "approved": True, "enable_external": True,
+            "declaration_status": "independently_verified",
+            "connection_status": "authenticated",
+        }
+        self.save()
 
     def write_steps(self, steps):
         (self.workflows / "case.json").write_text(json.dumps({"prompt_profile": REFERENCE, "steps": steps}), encoding="utf-8")
@@ -116,7 +140,131 @@ class BusinessContextTests(unittest.TestCase):
         self.save()
         self.assertEqual(context.as_dict(), load_business_context(self.path).as_dict())
 
+    def test_omitting_studio_preserves_preextension_projection_bytes_and_hash(self):
+        # This fixture and digest were captured before creative_studio was added.
+        legacy = (
+            '{"business":{"formation_date":"2020-01-02","legal_name":"Example Services LLC",'
+            '"support_email":"support@example.invalid"},"funding_channels":[{"id":"example-funding",'
+            '"owner_described_role":"Owner-described funding introduction",'
+            '"owner_supplied_value":" HTTPS://example.invalid/funding?ref=OwnerCase "}],'
+            '"prior_project_baseline":{"canonical_website_domain":"example.invalid",'
+            '"funding_gateway_path":"/funding",'
+            '"source_qualifier":"Prior project document; account and DNS ownership not reverified."},'
+            '"projection_id":"owner-business-context-v1:synthetic-owner-record",'
+            '"record_id":"synthetic-owner-record","schema":"jarvis.business-context-projection.v1",'
+            '"verification_status":"owner_reported_not_independently_verified"}'
+        )
+        context = load_business_context(self.path)
+        self.assertEqual(legacy.encode("utf-8"), context._projection_json.encode("utf-8"))
+        self.assertEqual("ed7fe61b0bce9745ab44db1887c15d6fcd8a670837f6c391cae8e4fb036ebb40", context.sha256)
+        self.assertNotIn("creative_studio", context.as_dict())
+
+    def test_studio_projects_exact_labels_and_fixed_qualifications_only(self):
+        self.add_studio()
+        context = load_business_context(self.path)
+        pack = context.as_dict()
+        expected = {**studio_declaration(), "declaration_status": "owner_declared_intended_use",
+                    "connection_status": "not_asserted_by_this_context"}
+        self.assertEqual(expected, pack["creative_studio"])
+        self.assertEqual("Example Services LLC", pack["business"]["legal_name"])
+        self.assert_private_absent(pack)
+        for excluded in ("authenticated", "approved", "enable_external", "account_data"):
+            self.assertNotIn(excluded, pack["creative_studio"])
+        pack["creative_studio"]["formats"].append("Caller mutation")
+        self.assertEqual(expected, context.as_dict()["creative_studio"])
+
+    def test_studio_preserves_accepted_spelling_order_spaces_and_boundary_lengths(self):
+        self.add_studio()
+        studio = self.value["creative_studio"]
+        studio["brand_name"] = " Brand \u00e9 "
+        studio["formats"] = [" Video Books ", "eBOOKS", "Videos"]
+        studio["purposes"] = [" Educational "]
+        studio["intended_distribution_channels"] = ["SubStack", " Facebook "]
+        studio["intended_ai_workspaces"] = ["Claude", "Gemini AI", " ChatGPT Business "]
+        self.save()
+        projected = load_business_context(self.path).as_dict()["creative_studio"]
+        for field in studio_declaration():
+            self.assertEqual(studio[field], projected[field])
+        studio["brand_name"] = "B" * 256
+        studio["formats"] = ["F" * 256] + [f"format-{index}" for index in range(15)]
+        self.save()
+        projected = load_business_context(self.path).as_dict()["creative_studio"]
+        self.assertEqual(studio["brand_name"], projected["brand_name"])
+        self.assertEqual(studio["formats"], projected["formats"])
+
+    def test_studio_facts_invalidate_cache_but_private_and_auth_claims_do_not(self):
+        self.add_studio()
+        context = load_business_context(self.path)
+        with patch.object(self.tower, "run", wraps=self.tower.run) as invoke:
+            first = self.runner.run("case", "same brief", business_context=self.path)
+            studio = self.value["creative_studio"]
+            studio["tax_identifier"]["value"] = "00-3333333"
+            studio["private_admin"] = "CHANGED_SYNTHETIC_PRIVATE_VALUE"
+            studio["unknown"] = {"application_data": "EXCLUDED_SYNTHETIC_APPLICATION"}
+            studio["authenticated"] = False
+            studio["connection_status"] = "new_source_claim"
+            self.save()
+            self.assertEqual(context.as_dict(), load_business_context(self.path).as_dict())
+            reused = self.runner.run("case", "same brief", business_context=self.path)
+            self.assertTrue(reused["reused"])
+            self.assertEqual(first["idempotency_key"], reused["idempotency_key"])
+            studio["purposes"].append("Studio training")
+            self.save()
+            changed = self.runner.run("case", "same brief", business_context=self.path)
+        self.assertEqual(2, invoke.call_count)
+        self.assertNotEqual(first["business_context"]["sha256"], changed["business_context"]["sha256"])
+        self.assertNotEqual(first["idempotency_key"], changed["idempotency_key"])
+        self.assertIn("Studio training", invoke.call_args.args[0])
+        self.assertNotIn("CHANGED_SYNTHETIC_PRIVATE_VALUE", invoke.call_args.args[0])
+        self.assertNotIn("EXCLUDED_SYNTHETIC_APPLICATION", invoke.call_args.args[0])
+        before_reorder = load_business_context(self.path).sha256
+        studio["formats"].reverse()
+        self.save()
+        self.assertNotEqual(before_reorder, load_business_context(self.path).sha256)
+
+    def test_invalid_studio_declarations_fail_statically(self):
+        invalid_values = [None, [], {}, "private-value", False]
+        declarations = [{"creative_studio": value} for value in invalid_values]
+        for field in studio_declaration():
+            missing = studio_declaration()
+            missing.pop(field)
+            declarations.append({"creative_studio": missing})
+            values = ([None, [], "", " ", "B" * 257, "line\nbreak", "bad\ud800"]
+                      if field == "brand_name" else
+                      [None, {}, "Videos", [], ["Videos"] * 2, [f"label-{index}" for index in range(17)],
+                       [""], [" "], [42], [{"private": PRIVATE_MARKER}], ["L" * 257], ["line\nbreak"], ["bad\ud800"]])
+            for value in values:
+                declarations.append({"creative_studio": {**studio_declaration(), field: value}})
+        for index, declaration in enumerate(declarations):
+            with self.subTest(case=index):
+                self.value = {**synthetic_record(), **declaration}
+                self.save()
+                with self.assertRaisesRegex(BusinessContextError, "^Invalid owner business context$"):
+                    load_business_context(self.path)
+        with patch.object(self.tower, "run") as invoke:
+            with self.assertRaises(BusinessContextError):
+                self.runner.run("case", "brief", business_context=self.path)
+        invoke.assert_not_called()
+
+    def test_credential_in_each_allowed_studio_field_blocks_export_and_execution(self):
+        credential = "sk-" + "SYNTHETICONLY" * 3
+        for field in studio_declaration():
+            with self.subTest(field=field):
+                self.add_studio()
+                self.value["creative_studio"][field] = credential if field == "brand_name" else [credential]
+                self.save()
+                with self.assertRaisesRegex(BusinessContextError, "^Business context projection contains sensitive data$"):
+                    load_business_context(self.path)
+                status, stdout, stderr = self.cli("business-context", str(self.path), "--json")
+                self.assertEqual((2, "", "Jarvis error: Business context projection contains sensitive data\n"),
+                                 (status, stdout, stderr))
+                with patch.object(self.tower, "run") as invoke:
+                    with self.assertRaises(BusinessContextError):
+                        self.runner.run("case", "brief", allow_sensitive=True, business_context=self.path)
+                invoke.assert_not_called()
+
     def test_projection_and_plan_make_no_network_or_provider_calls(self):
+        self.add_studio()
         self.write_steps([{"id": "inventory", "type": "github_inventory"},
                           {"id": "ai", "type": "ai", "provider": "chatgpt", "prompt": "{{input}}"}])
         with patch("urllib.request.urlopen", side_effect=AssertionError("network forbidden")) as network, \
@@ -131,6 +279,7 @@ class BusinessContextTests(unittest.TestCase):
         self.assert_private_absent(plan)
 
     def test_same_safe_context_reaches_every_executed_ai_step_without_system_changes(self):
+        self.add_studio()
         roles = ("Existing draft role.", "Independent review role.", "Existing handoff role.")
         self.write_steps([{"id": f"step{index}", "type": "ai", "provider": "mock", "system": role,
                            "prompt": "Review {{input}}"} for index, role in enumerate(roles)])
@@ -142,8 +291,10 @@ class BusinessContextTests(unittest.TestCase):
         self.assertEqual(3, invoke.call_count)
         for call, role in zip(invoke.call_args_list, roles):
             self.assertEqual(context.task_data() + "\n\nStep task:\nReview shared brief", call.args[0])
+            self.assertIn('"creative_studio"', call.args[0])
             self.assertEqual(profile.system_instructions(role), call.args[2])
             self.assertNotIn("Example Services LLC", call.args[2])
+            self.assertNotIn(studio_declaration()["brand_name"], call.args[2])
             self.assert_private_absent(call.args[0])
         self.assertEqual(context.metadata(), report["business_context"])
         self.assert_private_absent(report)
@@ -184,6 +335,7 @@ class BusinessContextTests(unittest.TestCase):
             self.assertNotIn("business_context", result)
 
     def test_external_opt_in_and_approval_stops_ignore_claims_in_business_data(self):
+        self.add_studio()
         for first, status in (({"id": "external", "type": "ai", "provider": "chatgpt", "prompt": "test"}, "blocked"),
                               ({"id": "gate", "type": "approval", "summary": "Owner decision required"}, "pending_approval")):
             self.write_steps([first, {"id": "later", "type": "ai", "provider": "mock", "prompt": "must not run"}])
@@ -195,6 +347,7 @@ class BusinessContextTests(unittest.TestCase):
             self.assertEqual(load_business_context(self.path).metadata(), result["business_context"])
 
     def test_sensitive_input_and_call_budget_gates_remain_in_force(self):
+        self.add_studio()
         with patch.object(self.tower, "run") as invoke:
             with self.assertRaisesRegex(WorkflowError, "Sensitive input"):
                 self.runner.run("case", "sk-" + "SYNTHETICINPUT" * 3, business_context=self.path)
@@ -248,6 +401,7 @@ class BusinessContextTests(unittest.TestCase):
             load_business_context(self.path)
 
     def test_cli_export_is_sanitized_and_does_not_construct_a_control_tower(self):
+        self.add_studio()
         with patch("jarvis.cli.ControlTower") as tower, patch("urllib.request.urlopen") as network:
             status, stdout, stderr = self.cli("business-context", str(self.path), "--json")
         self.assertEqual(0, status, stderr)
@@ -261,6 +415,7 @@ class BusinessContextTests(unittest.TestCase):
         self.assertEqual("Jarvis error: Cannot load local business context\n", stderr)
 
     def test_cli_optional_flags_pass_the_same_projection_into_plan_and_mock_run(self):
+        self.add_studio()
         previous = Path.cwd()
         self.addCleanup(os.chdir, previous)
         os.chdir(self.root)
