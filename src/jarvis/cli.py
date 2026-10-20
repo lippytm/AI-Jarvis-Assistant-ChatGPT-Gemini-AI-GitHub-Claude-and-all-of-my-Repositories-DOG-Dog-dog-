@@ -124,14 +124,18 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "workflows":
             _emit(WorkflowRunner(tower).list(), args.json)
         elif args.command == "run":
-            _emit(WorkflowRunner(tower).run(args.workflow, args.input,
-                                            args.allow_external, args.force,
-                                            args.allow_sensitive), args.json)
+            result = WorkflowRunner(tower).run(args.workflow, args.input,
+                                                args.allow_external, args.force,
+                                                args.allow_sensitive)
+            _emit(result, args.json)
+            return 0 if result["status"] == "completed" else 1
         elif args.command == "plan":
             _emit(WorkflowRunner(tower).plan(args.workflow, args.input), args.json)
         elif args.command == "validate-workflows":
             result = WorkflowRunner(tower).validate_all()
-            _emit({"valid": not any(result.values()), "workflows": result}, args.json)
+            valid = bool(result) and not any(result.values())
+            _emit({"valid": valid, "workflows": result}, args.json)
+            return 0 if valid else 1
         elif args.command == "approvals":
             _emit(ApprovalQueue().list(args.status), args.json)
         elif args.command == "approve":
@@ -142,7 +146,9 @@ def main(argv: list[str] | None = None) -> int:
             from pathlib import Path
             _emit(RunBundler().verify(Path(args.path)), args.json)
         elif args.command == "doctor":
-            _emit(Doctor(tower).run(), args.json)
+            result = Doctor(tower).run()
+            _emit(result, args.json)
+            return 0 if result["status"] == "ready_local" else 1
         elif args.command == "intake":
             from pathlib import Path
             _emit(IntakeBridge().capture(args.source, Path(args.path), args.title,
