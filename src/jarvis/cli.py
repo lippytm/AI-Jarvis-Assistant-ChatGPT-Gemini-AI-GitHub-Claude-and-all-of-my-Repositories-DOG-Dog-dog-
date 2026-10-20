@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from pathlib import Path
 from typing import Any
 
 from .config import Settings
@@ -20,6 +21,8 @@ from .viability import ViabilityEngine
 from .prevention import PreventionLibrary
 from .outcomes import OutcomeEvidence
 from .business_context import load_business_context
+from .studio_production import build_production_plan, verify_production_plan
+from .studio_economics import load_studio_economics
 
 
 def _emit(value: Any, as_json: bool) -> None:
@@ -65,6 +68,17 @@ def parser() -> argparse.ArgumentParser:
     business_context = commands.add_parser("business-context", help="Export sanitized local owner business facts")
     business_context.add_argument("path", metavar="PATH")
     business_context.add_argument("--json", action="store_true")
+    studio_plan = commands.add_parser("studio-plan", help="Build a local production packet from a filled brief and text sources")
+    studio_plan.add_argument("path", metavar="BRIEF")
+    studio_plan.add_argument("--output", required=True, metavar="DIRECTORY",
+                             help="Fresh local output directory; existing paths are refused")
+    studio_plan.add_argument("--json", action="store_true")
+    studio_verify = commands.add_parser("verify-studio-plan", help="Verify an archived local production packet")
+    studio_verify.add_argument("path", metavar="DIRECTORY")
+    studio_verify.add_argument("--json", action="store_true")
+    studio_economics = commands.add_parser("studio-economics", help="Evaluate hypothetical studio costs and unit economics")
+    studio_economics.add_argument("path", metavar="ASSUMPTIONS")
+    studio_economics.add_argument("--json", action="store_true")
     validate = commands.add_parser("validate-workflows", help="Validate every workflow definition")
     validate.add_argument("--json", action="store_true")
     approvals = commands.add_parser("approvals", help="List approval requests")
@@ -116,6 +130,16 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "business-context":
             _emit(load_business_context(args.path).as_dict(), args.json)
             return 0
+        if args.command == "studio-plan":
+            result = build_production_plan(Path.cwd(), Path(args.path), Path(args.output))
+            _emit(result, args.json)
+            return 0 if result["status"] == "prepared_for_review" else 1
+        if args.command == "verify-studio-plan":
+            _emit(verify_production_plan(Path(args.path)), args.json)
+            return 0
+        if args.command == "studio-economics":
+            _emit(load_studio_economics(Path(args.path)), args.json)
+            return 0
         tower = ControlTower(Settings.from_env())
         if args.command == "health":
             _emit(tower.health(), args.json)
@@ -155,14 +179,12 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "bundle":
             _emit(RunBundler().create(args.run_id), args.json)
         elif args.command == "verify-bundle":
-            from pathlib import Path
             _emit(RunBundler().verify(Path(args.path)), args.json)
         elif args.command == "doctor":
             result = Doctor(tower).run()
             _emit(result, args.json)
             return 0 if result["status"] == "ready_local" else 1
         elif args.command == "intake":
-            from pathlib import Path
             _emit(IntakeBridge().capture(args.source, Path(args.path), args.title,
                                            args.allow_sensitive), args.json)
         elif args.command == "intakes":
@@ -170,20 +192,16 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "patrol":
             _emit(Patrol().run(args.owner), args.json)
         elif args.command == "improve":
-            from pathlib import Path
             _emit(ImprovementLoop().run(Path(args.path)), args.json)
         elif args.command == "assess-problem":
-            from pathlib import Path
             payload = json.loads(Path(args.path).read_text(encoding="utf-8"))
             _emit(SolvabilityEngine().assess(Problem.from_dict(payload)), args.json)
         elif args.command == "assess-viability":
-            from pathlib import Path
             payload = json.loads(Path(args.path).read_text(encoding="utf-8"))
             _emit(ViabilityEngine().assess(payload).as_dict(), args.json)
         elif args.command == "recommend-controls":
             _emit(PreventionLibrary().recommend(args.domain), args.json)
         elif args.command == "rank-outcomes":
-            from pathlib import Path
             _emit(OutcomeEvidence().evaluate(Path(args.path)), args.json)
         return 0
     except (ProviderError, WorkflowError, BundleError, IntakeError, ValueError) as exc:

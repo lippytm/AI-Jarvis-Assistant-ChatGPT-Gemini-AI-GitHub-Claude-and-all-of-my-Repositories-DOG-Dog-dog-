@@ -1,0 +1,70 @@
+{
+  "schema": "jarvis.studio-production-brief.v1",
+  "project_id": "jarvis-workforce-pilot",
+  "revision": "draft-1",
+  "title": "AI Jarvis and the Empowered Human Workforce — Production Pilot",
+  "objective": "Help a studio operator define one reviewable assignment and explain which adaptations need attention after a source changes. Done for this pass means four current local text drafts, consistent parent references, and visible remaining editorial/media/release work. This is a Chapter 6 teaching companion, not a complete 350+ page book.",
+  "audience": "Small studio operators, educators, and team leads beginning to coordinate AI-assisted publishing. The workplace case is fictional.",
+  "language": "en",
+  "purposes": [
+    "Educational",
+    "Business of Businesses Systems of Systems"
+  ],
+  "formats": [
+    "Videos",
+    "eBooks",
+    "Audiobooks",
+    "Video Books"
+  ],
+  "source_declaration": "provided_local_drafts",
+  "assets": [
+    {
+      "id": "chapter",
+      "kind": "ebook_manuscript",
+      "path": "assets/chapter-06.md",
+      "sha256": "14b62eae40e5a948b91a9e791f974b61d02937343e8e1f19298cc2e60bacf4de",
+      "parents": []
+    },
+    {
+      "id": "narration",
+      "kind": "narration_script",
+      "path": "assets/narration.md",
+      "sha256": "9bc1e5bb7b52711b5b993ee6a818d86d49f20ef6f2ed252c99a4e8ad76d7571f",
+      "parents": [
+        {
+          "asset_id": "chapter",
+          "sha256": "14b62eae40e5a948b91a9e791f974b61d02937343e8e1f19298cc2e60bacf4de"
+        }
+      ]
+    },
+    {
+      "id": "short_video",
+      "kind": "video_script",
+      "path": "assets/video-script.md",
+      "sha256": "f686fc34f6b798759a8cafebcf7ba29c2f65dbd1d4bc8a56012c59465e925f8a",
+      "parents": [
+        {
+          "asset_id": "chapter",
+          "sha256": "14b62eae40e5a948b91a9e791f974b61d02937343e8e1f19298cc2e60bacf4de"
+        }
+      ]
+    },
+    {
+      "id": "video_book",
+      "kind": "video_book_storyboard",
+      "path": "assets/video-book-storyboard.md",
+      "sha256": "b2672f5519e4e54ccba4debf218f78fc52ad44f42774193e1665e242fc31a9cc",
+      "parents": [
+        {
+          "asset_id": "chapter",
+          "sha256": "14b62eae40e5a948b91a9e791f974b61d02937343e8e1f19298cc2e60bacf4de"
+        },
+        {
+          "asset_id": "narration",
+          "sha256": "9bc1e5bb7b52711b5b993ee6a818d86d49f20ef6f2ed252c99a4e8ad76d7571f"
+        }
+      ]
+    }
+  ],
+  "reviews": []
+}
