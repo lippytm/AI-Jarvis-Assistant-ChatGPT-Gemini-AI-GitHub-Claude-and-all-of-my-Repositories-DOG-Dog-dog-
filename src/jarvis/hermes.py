@@ -8,6 +8,7 @@ from __future__ import annotations
 import hashlib
 import json
 import sqlite3
+from contextlib import closing
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
@@ -46,11 +47,11 @@ class MemPalace:
     def __init__(self, path: Path):
         self.path = path
         path.parent.mkdir(parents=True, exist_ok=True)
-        with sqlite3.connect(path) as db:
+        with closing(sqlite3.connect(path)) as db, db:
             db.execute("CREATE TABLE IF NOT EXISTS events (run_id TEXT NOT NULL, sequence INTEGER NOT NULL, stage TEXT NOT NULL, evidence_json TEXT NOT NULL, previous_hash TEXT NOT NULL, entry_hash TEXT NOT NULL, PRIMARY KEY (run_id, sequence))")
 
     def append(self, run_id: str, stage: str, evidence: dict) -> str:
-        with sqlite3.connect(self.path) as db:
+        with closing(sqlite3.connect(self.path)) as db, db:
             db.execute("BEGIN IMMEDIATE")
             last = db.execute("SELECT sequence, entry_hash FROM events WHERE run_id=? ORDER BY sequence DESC LIMIT 1", (run_id,)).fetchone()
             sequence, previous = (last[0] + 1, last[1]) if last else (0, "0" * 64)
@@ -63,7 +64,7 @@ class MemPalace:
 
     def _verified_history(self, run_id: str) -> list[dict]:
         # Validate and return the same snapshot, not a second unverified read.
-        with sqlite3.connect(self.path) as db:
+        with closing(sqlite3.connect(self.path)) as db, db:
             rows = db.execute("SELECT sequence, stage, evidence_json, previous_hash, entry_hash FROM events WHERE run_id=? ORDER BY sequence", (run_id,)).fetchall()
         previous = "0" * 64
         events = []

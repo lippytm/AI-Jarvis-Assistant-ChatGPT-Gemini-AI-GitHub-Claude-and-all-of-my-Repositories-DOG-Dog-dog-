@@ -1,3 +1,4 @@
+from contextlib import closing
 import io
 import json
 import sqlite3
@@ -26,7 +27,7 @@ class HermesTests(unittest.TestCase):
             self.assertEqual(calls, ["gemini-ai", "claude-coworker"])
             self.assertEqual(report["receipts"][-1]["status"], "pending_owner_approval")
             self.assertTrue(report["chain_valid"])
-            with sqlite3.connect(ledger.path) as db:
+            with closing(sqlite3.connect(ledger.path)) as db, db:
                 db.execute("UPDATE events SET evidence_json=? WHERE run_id=? AND sequence=0",
                            ('{"tampered":true}', report["run_id"]))
             self.assertFalse(ledger.verify(report["run_id"]))

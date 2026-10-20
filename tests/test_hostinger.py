@@ -1,5 +1,6 @@
 """Bounded Hostinger transport tests; every request is intercepted locally."""
 
+from contextlib import closing
 from hashlib import sha256
 import io
 import json
@@ -105,7 +106,7 @@ class HostingerTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "Duplicate"):
                 list_websites(allow_external=True, token="synthetic", ledger=ledger,
                               opener=lambda *_a, **_k: response)
-            with sqlite3.connect(ledger.path) as database:
+            with closing(sqlite3.connect(ledger.path)) as database, database:
                 self.assertEqual(0, database.execute("SELECT COUNT(*) FROM events").fetchone()[0])
 
     def test_overlapping_pages_do_not_append_success_receipt(self):
@@ -116,7 +117,7 @@ class HostingerTests(unittest.TestCase):
             opener = Mock(side_effect=[Response(first), Response(second)])
             with self.assertRaisesRegex(ValueError, "Duplicate"):
                 list_websites(allow_external=True, token="synthetic", ledger=ledger, opener=opener)
-            with sqlite3.connect(ledger.path) as database:
+            with closing(sqlite3.connect(ledger.path)) as database, database:
                 self.assertEqual(0, database.execute("SELECT COUNT(*) FROM events").fetchone()[0])
 
     def test_documented_identity_duplicates_reject_different_records(self):
@@ -132,7 +133,7 @@ class HostingerTests(unittest.TestCase):
                     opener = Mock(side_effect=[Response(body) for body in bodies])
                     with self.assertRaisesRegex(ValueError, "Duplicate"):
                         list_websites(allow_external=True, token="synthetic", ledger=ledger, opener=opener)
-                    with sqlite3.connect(ledger.path) as database:
+                    with closing(sqlite3.connect(ledger.path)) as database, database:
                         self.assertEqual(0, database.execute("SELECT COUNT(*) FROM events").fetchone()[0])
 
     def test_optional_missing_identity_is_reported_without_snapshot_claim(self):
@@ -201,7 +202,7 @@ class HostingerTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 list_websites(allow_external=True, token="synthetic", ledger=ledger,
                               opener=lambda *_a, **_k: Response(page([], total=1)))
-            with sqlite3.connect(ledger.path) as database:
+            with closing(sqlite3.connect(ledger.path)) as database, database:
                 self.assertEqual(0, database.execute("SELECT COUNT(*) FROM events").fetchone()[0])
 
 
