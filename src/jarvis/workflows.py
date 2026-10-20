@@ -13,7 +13,10 @@ from .control_tower import ControlTower
 from .approvals import ApprovalQueue
 from .github_inventory import list_repositories
 from .models import utc_now
+from .prompt_profiles import (PromptProfile, PromptProfileError, load_prompt_profile,
+                              validate_reference)
 from .safety import find_sensitive, redact
+from .business_context import BusinessContext, load_business_context
 
 
 TOKEN = re.compile(r"{{\s*([a-zA-Z0-9_.-]+)\s*}}")
@@ -30,38 +33,85 @@ class WorkflowRunner:
     workflow_dir: Path = Path("workflows")
     outbox_dir: Path = Path("data/outbox")
     run_dir: Path = Path("data/runs")
+    # Explicit compatibility for isolated API/test workflows. Catalog validation
+    # always requires profiles, regardless of this plan/run-only option.
+    allow_unprofiled: bool = False
 
     def list(self) -> list[str]:
         return sorted(path.stem for path in self.workflow_dir.glob("*.json")
                       if WORKFLOW_NAME.fullmatch(path.stem))
 
     def load(self, name: str) -> dict[str, Any]:
+        return self._load(name)[0]
+
+    def _load(self, name: str) -> tuple[dict[str, Any], PromptProfile | None]:
         if not WORKFLOW_NAME.fullmatch(name):
             raise WorkflowError("Workflow name must be a registered filename without a path")
         path = self.workflow_dir / f"{name}.json"
         if not path.is_file():
             raise WorkflowError(f"Workflow '{name}' not found")
-        definition = json.loads(path.read_text(encoding="utf-8"))
+        return self._read_definition(path, required_profile=not self.allow_unprofiled)
+
+    def _read_definition(self, path: Path, *, required_profile: bool
+                         ) -> tuple[dict[str, Any], PromptProfile | None]:
+        try:
+            definition = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            raise WorkflowError(f"Cannot read workflow: {type(exc).__name__}") from exc
         errors = self.validate_definition(definition)
         if errors:
             raise WorkflowError("; ".join(errors))
-        return definition
+        if "prompt_profile" not in definition:
+            if required_profile:
+                raise WorkflowError("Workflow requires a prompt_profile reference")
+            return definition, None
+        try:
+            profile = load_prompt_profile(definition["prompt_profile"], self.workflow_dir.parent)
+        except PromptProfileError as exc:
+            raise WorkflowError(str(exc)) from exc
+        return definition, profile
 
     def validate_all(self) -> dict[str, list[str]]:
+        return self.validate_catalog()["workflows"]
+
+    def validate_catalog(self) -> dict[str, Any]:
+        """Validate and attest every JSON entry, with no unprofiled exemption."""
         results: dict[str, list[str]] = {}
+        covered: dict[str, Any] = {}
         for path in sorted(self.workflow_dir.glob("*.json")):
             if not WORKFLOW_NAME.fullmatch(path.stem):
                 results[path.stem] = ["Workflow filename must contain only letters, numbers, underscores or hyphens"]
                 continue
             try:
-                definition = json.loads(path.read_text(encoding="utf-8"))
-                results[path.stem] = self.validate_definition(definition)
-            except (ValueError, OSError) as exc:
-                results[path.stem] = [f"Cannot validate workflow: {type(exc).__name__}"]
-        return results
+                definition, profile = self._read_definition(path, required_profile=True)
+                assert profile is not None
+                results[path.stem] = []
+                covered[path.stem] = {"workflow_sha256": self._definition_hash(definition),
+                                      "prompt_profile": profile.metadata()}
+            except WorkflowError as exc:
+                results[path.stem] = [str(exc)]
+        valid = bool(results) and not any(results.values())
+        coverage = {"scope": "repository_workflow_catalog", "required": True,
+                    "complete": valid, "workflow_count": len(results),
+                    "covered_count": len(covered),
+                    "uncovered_workflows": sorted(set(results) - set(covered)),
+                    "workflows": covered,
+                    "catalog_sha256": self._definition_hash(covered)}
+        return {"valid": valid, "workflows": results, "prompt_profile_coverage": coverage}
 
-    def plan(self, name: str, input_text: str) -> dict[str, Any]:
-        definition = self.load(name)
+    @staticmethod
+    def _definition_hash(value: dict[str, Any]) -> str:
+        return sha256(json.dumps(value, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
+    @staticmethod
+    def _profile_evidence(profile: PromptProfile | None) -> dict[str, Any]:
+        return {"prompt_profile": profile.metadata() if profile else None,
+                "profile_status": "resolved" if profile else "unprofiled_ad_hoc"}
+
+    def plan(self, name: str, input_text: str, *,
+             business_context: Path | str | None = None) -> dict[str, Any]:
+        definition, profile = self._load(name)
+        business = load_business_context(business_context) if business_context is not None else None
         planned = []
         external_calls = 0
         for step in definition["steps"]:
@@ -73,7 +123,9 @@ class WorkflowRunner:
                             "configured": (self.tower.providers[provider].configured()
                                            if provider in self.tower.providers else None)})
         findings = sorted({finding.kind for finding in find_sensitive(input_text)})
-        return {"workflow": name, "valid": True, "steps": planned,
+        return {"workflow": name, "workflow_sha256": self._definition_hash(definition),
+                **self._profile_evidence(profile), "valid": True, "steps": planned,
+                **({"business_context": business.metadata()} if business else {}),
                 "external_calls": external_calls,
                 "external_call_budget": self.tower.settings.max_external_calls,
                 "within_budget": external_calls <= self.tower.settings.max_external_calls,
@@ -85,9 +137,14 @@ class WorkflowRunner:
         errors: list[str] = []
         if not isinstance(definition, dict):
             return ["Workflow must be an object"]
+        if "prompt_profile" in definition:
+            try:
+                validate_reference(definition["prompt_profile"])
+            except PromptProfileError as exc:
+                errors.append(str(exc))
         steps = definition.get("steps")
         if not isinstance(steps, list) or not steps:
-            return ["Workflow must contain at least one step"]
+            return errors + ["Workflow must contain at least one step"]
         seen: set[str] = set()
         for index, step in enumerate(steps):
             prefix = f"step {index + 1}"
@@ -114,8 +171,10 @@ class WorkflowRunner:
         return errors
 
     def run(self, name: str, input_text: str, allow_external: bool = False,
-            force: bool = False, allow_sensitive: bool = False) -> dict[str, Any]:
-        definition = self.load(name)
+            force: bool = False, allow_sensitive: bool = False, *,
+            business_context: Path | str | None = None) -> dict[str, Any]:
+        definition, profile = self._load(name)
+        business = load_business_context(business_context) if business_context is not None else None
         external_calls = sum(1 for step in definition["steps"]
                              if step.get("type") == "ai" and step.get("provider", "mock") != "mock")
         if external_calls > self.tower.settings.max_external_calls:
@@ -125,8 +184,12 @@ class WorkflowRunner:
         if findings and not allow_sensitive:
             kinds = ", ".join(sorted({finding.kind for finding in findings}))
             raise WorkflowError(f"Sensitive input detected ({kinds}); remove it or explicitly allow it")
-        definition_hash = sha256(json.dumps(definition, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
-        identity = {"contract": 2, "workflow": name, "workflow_sha256": definition_hash,
+        definition_hash = self._definition_hash(definition)
+        profile_evidence = self._profile_evidence(profile)
+        business_evidence = {"business_context": business.metadata()} if business else {}
+        identity = {"contract": 3, "workflow": name, "workflow_sha256": definition_hash,
+                    **profile_evidence,
+                    **business_evidence,
                     "input": input_text, "allow_external": allow_external,
                     "allow_sensitive": allow_sensitive}
         idempotency_key = sha256(json.dumps(identity, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
@@ -147,7 +210,7 @@ class WorkflowRunner:
             step_id = step["id"]
             kind = step["type"]
             try:
-                result = self._execute_step(step, context, run_id, allow_external)
+                result = self._execute_step(step, context, run_id, allow_external, profile, business)
             except Exception as exc:
                 # Preserve failure evidence without logging prompts, keys or response bodies.
                 result = {"status": "failed", "output": "[Step failed; downstream work stopped]",
@@ -159,6 +222,8 @@ class WorkflowRunner:
                 status = "blocked" if result["status"] == "skipped" else result["status"]
                 break
         report = {"workflow": name, "workflow_sha256": definition_hash,
+                  **profile_evidence,
+                  **business_evidence,
                   "run_id": run_id, "idempotency_key": idempotency_key,
                   "created_at": utc_now(), "status": status, "steps": results,
                   "not_run_steps": [step["id"] for step in definition["steps"][len(results):]]}
@@ -171,7 +236,9 @@ class WorkflowRunner:
         return safe_report
 
     def _execute_step(self, step: dict[str, Any], context: dict[str, Any],
-                      run_id: str, allow_external: bool) -> dict[str, Any]:
+                      run_id: str, allow_external: bool,
+                      profile: PromptProfile | None = None,
+                      business_context: BusinessContext | None = None) -> dict[str, Any]:
         step_id = step["id"]
         kind = step["type"]
         if kind == "ai":
@@ -181,7 +248,11 @@ class WorkflowRunner:
                           "reason": "external providers require --allow-external"}
             else:
                 prompt = self._render(step["prompt"], context)
-                response = self.tower.run(prompt, provider, step.get("system"))
+                if business_context:
+                    prompt = business_context.task_data() + "\n\nStep task:\n" + prompt
+                system = (profile.system_instructions(step.get("system"))
+                          if profile else step.get("system"))
+                response = self.tower.run(prompt, provider, system)
                 result = {"status": "completed", "output": response.content,
                           "task_id": response.task_id, "provider": response.provider,
                           "model": response.model, "content_sha256": response.content_sha256}

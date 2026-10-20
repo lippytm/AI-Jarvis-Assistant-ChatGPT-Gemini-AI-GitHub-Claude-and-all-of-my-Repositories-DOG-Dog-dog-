@@ -16,20 +16,46 @@ class ReferralReviewTests(unittest.TestCase):
     def setUp(self):
         self.data = load_registry(ROOT / "config/referral-programs.public.json")
 
-    def test_three_channels_are_preserved(self):
+    def test_four_routes_and_prior_partner_evidence_are_preserved(self):
         report = build_review(self.data)
-        self.assertEqual(len(report["programs"]), 3)
+        self.assertEqual(len(report["programs"]), 4)
         self.assertEqual(report["programs"][0]["purpose"], "customer_referral")
         self.assertEqual(report["programs"][1]["purpose"], "partner_recruitment")
+        self.assertEqual(report["programs"][1]["original_url"], "http://7figurespartners.com?a_lippytm")
+        self.assertEqual(report["programs"][1]["prior_original_urls"],
+                         ["http://join.7figurespartners.com/?a_aid=lippytm"])
         self.assertTrue(report["programs"][2]["original_url"].endswith("/lippytmai"))
-        self.assertEqual(sum(len(p["unresolved_gates"]) for p in report["programs"]), 18)
+        self.assertEqual(report["programs"][3]["original_url"], "lippytmai.getbizfunds.com")
+        self.assertEqual(report["programs"][3]["https_candidate_url"], "https://lippytmai.getbizfunds.com")
+        self.assertEqual(sum(len(p["unresolved_gates"]) for p in report["programs"]), 24)
 
     def test_changed_attribution_is_rejected(self):
-        for index in range(3):
+        for index in range(4):
             data = copy.deepcopy(self.data)
             data["programs"][index]["original_url"] += "x"
             with self.subTest(index=index), self.assertRaises(ValueError):
                 validate_registry(data)
+
+    def test_partner_query_cannot_be_normalized_or_replaced_by_prior_route(self):
+        for url in ("http://7figurespartners.com?a_lippytm=",
+                    "http://7figurespartners.com?a_aid=lippytm",
+                    "http://join.7figurespartners.com/?a_aid=lippytm"):
+            data = copy.deepcopy(self.data)
+            data["programs"][1]["original_url"] = url
+            with self.subTest(url=url), self.assertRaises(ValueError):
+                validate_registry(data)
+
+    def test_prior_evidence_is_locked_and_cannot_add_arbitrary_routes(self):
+        for index, prior in ((1, []), (1, ["https://example.org"]), (0, ["https://example.org"])):
+            data = copy.deepcopy(self.data)
+            data["programs"][index]["prior_original_urls"] = prior
+            with self.subTest(index=index, prior=prior), self.assertRaises(ValueError):
+                validate_registry(data)
+
+    def test_scheme_free_original_is_not_silently_replaced_by_https_candidate(self):
+        self.data["programs"][3]["original_url"] = self.data["programs"][3]["https_candidate_url"]
+        with self.assertRaises(ValueError):
+            validate_registry(self.data)
 
     def test_https_candidate_cannot_change_destination(self):
         self.data["programs"][0]["https_candidate_url"] = "https://example.org/"

@@ -1,10 +1,12 @@
 {
   "schema_version": "1.0.0",
   "account_status": "unverified",
+  "documentation_reviewed_at": "2026-10-20",
+  "documentation_scope": "Official API capabilities; no account, product entitlement or site connection verified",
   "capabilities": [
-    {"id":"hosting-website-inventory","surface":"Hostinger hosting API","operation":"GET /api/hosting/v1/websites","documentation":"documented","account_connection":"unverified","implementation":"read-only adapter"},
+    {"id":"hosting-website-inventory","surface":"Hostinger hosting API","operation":"GET /api/hosting/v1/websites with documented page/per_page pagination","documentation":"documented API","documentation_url":"https://docs.hostinger.com/api-reference/endpoints/hosting/websites/list-websites","account_connection":"unverified","implementation":"bounded read-only adapter; offline tests only"},
     {"id":"manual-ai-builder","surface":"AI Builder Manual mode","operation":"visual editor and AI drafting","documentation":"documented UI","account_connection":"unverified","implementation":"handoff draft only"},
-    {"id":"agentic-ai-builder","surface":"AI Builder Agentic mode / Horizons","operation":"POST /api/horizons/v1/websites creates a site; GET /api/horizons/v1/websites/{websiteId} returns an editor link","documentation":"documented API","account_connection":"unverified","implementation":"disabled; no billable or creation calls"},
+    {"id":"agentic-ai-builder","surface":"Hostinger Horizons API","operation":"Official website index lists clone, list, create, edit, publish and get operations; exact mutation contracts require separate review","documentation":"documented API index","documentation_url":"https://docs.hostinger.com/api-reference/endpoints/horizons/websites","account_connection":"unverified","implementation":"not implemented; no creation, editing or publication calls"},
     {"id":"ai-store","surface":"AI Builder ecommerce","operation":"store creation and editing in builder","documentation":"documented UI","account_connection":"unverified","implementation":"handoff draft only"},
     {"id":"wordpress-ai-tools","surface":"Hostinger WordPress AI tools","operation":"plan-specific features","documentation":"endpoint family documented","account_connection":"unverified","implementation":"disabled pending site inventory"}
   ]

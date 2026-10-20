@@ -51,8 +51,10 @@ class HermesTests(unittest.TestCase):
         def opener(request, timeout):
             self.assertEqual(request.get_method(), "GET")
             self.assertEqual(request.get_header("Authorization"), "Bearer test-token")
-            return Response(json.dumps({"data": []}).encode())
-        self.assertEqual(list_websites(allow_external=True, token="test-token", opener=opener), {"data": []})
+            return Response(json.dumps({"data": [], "meta": {"current_page": 1, "per_page": 100, "total": 0}}).encode())
+        report = list_websites(allow_external=True, token="test-token", opener=opener)
+        self.assertEqual(report["data"], [])
+        self.assertTrue(report["meta"]["complete"])
 
 
 if __name__ == "__main__":

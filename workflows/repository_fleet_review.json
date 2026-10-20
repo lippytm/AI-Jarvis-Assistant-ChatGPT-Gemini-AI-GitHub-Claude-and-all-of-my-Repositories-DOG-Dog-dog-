@@ -1,6 +1,7 @@
 {
   "name": "Repository Fleet Review",
-  "description": "Inventory all accessible GitHub repositories and prepare a Jarvis review.",
+  "prompt_profile": {"id": "P-011-E6C-001", "revision": "repository-1"},
+  "description": "Inventory lippytm's public GitHub repository metadata and prepare a Jarvis review draft.",
   "steps": [
     {"id": "github_repositories", "type": "github_inventory", "owner": "lippytm"},
     {

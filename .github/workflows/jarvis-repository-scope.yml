@@ -6,6 +6,12 @@ on:
     paths:
       - '.jarvis/**'
       - '.github/workflows/**'
+      - 'docs/jarvis-task-templates.md'
+  pull_request:
+    paths:
+      - '.jarvis/**'
+      - '.github/workflows/jarvis-repository-scope.yml'
+      - 'docs/jarvis-task-templates.md'
   workflow_dispatch:
 
 permissions:
@@ -14,8 +20,11 @@ permissions:
 jobs:
   validate-scope:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Validate orchestration contracts
         shell: bash
         run: |
@@ -23,6 +32,7 @@ jobs:
           for file in \
             .jarvis/providers/contracts.yaml \
             .jarvis/repositories.yaml \
+            .jarvis/approvals/policy.md \
             .jarvis/knowledge/schema.yaml \
             .jarvis/orchestration/README.md \
             docs/jarvis-task-templates.md; do
@@ -30,4 +40,4 @@ jobs:
           done
           grep -q 'mode: all_accessible_repositories' .jarvis/repositories.yaml
           grep -q 'default: hermes_fabric' .jarvis/providers/contracts.yaml
-          grep -q 'approval_required' .jarvis/providers/contracts.yaml
+          grep -q 'approval_required:' .jarvis/repositories.yaml

@@ -2,6 +2,7 @@
 
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -24,7 +25,7 @@ class OperationalGateTests(unittest.TestCase):
         self.workflows.mkdir()
         self.tower = ControlTower(Settings("mock", self.root / "ledger.sqlite3", 5))
         self.runner = WorkflowRunner(self.tower, self.workflows,
-                                     self.root / "outbox", self.root / "runs")
+                                     self.root / "outbox", self.root / "runs", allow_unprofiled=True)
 
     def write(self, steps, name="case"):
         (self.workflows / f"{name}.json").write_text(json.dumps({"steps": steps}), encoding="utf-8")
@@ -117,6 +118,9 @@ class CLIGateTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
         (self.root / "workflows").mkdir()
+        (self.root / "config").mkdir()
+        shutil.copyfile(Path(__file__).resolve().parents[1] / "config/prompt-11-profile.json",
+                        self.root / "config/prompt-11-profile.json")
         (self.root / ".gitignore").write_text(".env\ndata/\n*.sqlite3\n", encoding="utf-8")
         self.env = dict(os.environ, PYTHONPATH=str(Path(__file__).resolve().parents[1] / "src"),
                         JARVIS_DEFAULT_PROVIDER="mock", JARVIS_DB_PATH=str(self.root / "test.sqlite3"))
@@ -126,6 +130,9 @@ class CLIGateTests(unittest.TestCase):
                               cwd=self.root, env=self.env, capture_output=True, text=True, timeout=15)
 
     def write(self, definition):
+        if isinstance(definition, dict):
+            definition = {"prompt_profile": {"id": "P-011-E6C-001", "revision": "repository-1"},
+                          **definition}
         (self.root / "workflows" / "case.json").write_text(json.dumps(definition), encoding="utf-8")
 
     def test_invalid_or_empty_workflow_catalog_fails_command(self):

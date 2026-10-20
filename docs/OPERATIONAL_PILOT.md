@@ -1,28 +1,39 @@
 # Jarvis operational pilot: October 20, 2026
 
 This maintenance increment turns public GitHub inventory reporting into a bounded
-live workflow and hardens the existing local runtimes. Its release decision is
-recorded in PRs #14, #2 and #6. A successful review-branch audit is evidence for
-that audit, not a deployment of the complete multi-provider swarm.
+live workflow and hardens the existing local runtimes. The owner approved
+promotion on October 20, 2026, and PRs #14, #2 and #6 were merged into `main` in
+that order. The verified audit demonstrates public metadata reporting; it does
+not demonstrate deployment of the complete multi-provider swarm.
 
 ## Components and actual scope
 
 | Component | Implemented behavior | Remaining activation boundary |
 | --- | --- | --- |
-| Synchronization check | Scans both control and workflow files, with redacted findings and regression checks. | Main promotion requires the exact PR merge approval. |
+| Synchronization check | Scans both control and workflow files, with redacted findings and regression checks; promoted to main in PR #14. | Future changes continue through reviewed pull requests. |
 | Python workflow runner | Stops at approvals, missing external opt-in and failures; reports downstream steps not run. | No authenticated approval-to-resume endpoint is implemented. |
 | Public GitHub audit | Reads public repository metadata and creates deterministic findings and proposals. | Does not inspect every repository's CI, code, deployments or revenue. |
 | Audit MemPalace receipts | Hashes reports and preserves a local ledger, manifest and anchor in each run's artifact. | No shared memory service or restored cross-run history. |
 | Node HTTP pilot | Authenticated repository-scoped planning, effective dry-run, bounded advisory calls. | Local-only; no hosted service, production identity, durable worker or aggregate spending budget. |
-| Provider and Hostinger adapters | Existing code and explicit configuration points remain available. | Live account access and end-to-end provider exchanges are not established by these tests. |
+| Shared Prompt #11 profile | All seven Python workflows and the Node planner resolve the same versioned guidance and record its hash. | Coverage proves the instruction source, not provider compliance or remote synchronization. |
+| Optional business context | Projects allowed owner facts once per local invocation; every executed Python AI step receives the same task data. | Private tax and administration fields are excluded; no automatic cloud-agent memory sync. |
+| Provider adapters | Require explicit models, bound responses and reject failed, refused, truncated or empty output before downstream work. | Live account access and end-to-end provider exchanges are not established by offline tests. |
+| Hostinger adapter | GET-only bounded inventory verifies pagination and duplicate records before a metadata-only receipt. | No account connection verified; completion is not a transactional snapshot or deployment. |
+| Funding-route review | Preserves four exact latest routes, earlier conflicting evidence and unresolved review checks. | Destination, attribution, terms and publication remain unverified. |
 
-## First live audit
+## Verified audit and triggers
 
-The audit workflow runs on relevant pull-request changes. This allows a real
-public metadata read to be tested before any main-branch merge. It also retains
-the existing daily schedule at 15:17 UTC and adds relevant main-push events for
-use after promotion. Pull-request runs record both the tested merge-checkout SHA
-and the source head SHA. The merge-checkout may differ from the source head.
+The audit workflow runs on relevant pull-request changes, relevant main pushes,
+and the existing daily schedule at 15:17 UTC. Pull-request runs record both the
+tested merge-checkout SHA and the source head SHA. The merge-checkout may differ
+from the source head.
+
+The first verified review-branch run was `39467647402`, at source head
+`abd73db645492803f5f3fcffb9d2a1313b78736c`. Its downloaded evidence verified with
+`integrity_valid: true` and `operational_success: true`. After promotion, main run
+`39470533073` completed successfully at commit
+`940e1f4b08061c7caeb8900e8590f69376360771`. Its checkout has the same source tree
+as the reviewed revision. Later runs must be checked against their own commits.
 
 The workflow has `contents: read`, a 15-minute timeout and a cap of 250 repository
 records. Explicit owner scope selects public API requests without a token; a
@@ -69,15 +80,33 @@ accessibility scorecard is still required. Automated structural checks and an AI
 code review cannot replace that human review. No checkout or product publication
 is part of this repository maintenance.
 
-## Integration order and recovery
+## Promotion record and recovery
 
-1. PR #14: tested scanner repair.
-2. PR #2: reconciled Control Tower and operational gates.
-3. PR #6: Unified Fabric, bounded audit and hardened local pilot.
+1. PR #14: scanner repair, merged as `87ab0df8d20a6c2d3449902dfb870f6357868899`.
+2. PR #2: Control Tower and operational gates, merged as
+   `5c2eede966d4663bf9f1433516cc7d4bfe608ff3`.
+3. PR #6: retargeted from the Control Tower branch to main, then merged as
+   `940e1f4b08061c7caeb8900e8590f69376360771`.
 
-The review branches preserve the dependency ancestry. Default-branch merges
-remain pending the owner's explicit approval of these exact pull requests. No
-default-branch write should be substituted for the blocked merge operation.
+The review branches preserve the dependency ancestry. The earlier automatic
+review block was resolved by the owner's subsequent approval; the three merges
+used the exact reviewed source heads. No direct default-branch write substituted
+for a merge.
+
+The first main runs also exposed a separate repository-scope check that looked
+for `approval_required` in the provider contract instead of the repository
+policy. The follow-up correction validates the existing declaration in
+`.jarvis/repositories.yaml`, requires the approval policy file, and runs the
+scope check on relevant pull requests. A successful audit alone is not a claim
+that every other CI job succeeded.
+
+The subsequent shared Prompt #11 integration and its catalog coverage are
+documented in `PROMPT11_WORKFLOW_PROFILE.md`. Its repository operating-profile
+version is distinct from the underlying source documents' inconsistent labels.
+The optional owner-context projection and proposed Hostinger mappings are
+documented in `BUSINESS_CONTEXT.md` and `PROPOSED_HOSTINGER_WORKFLOW_MAPPINGS.md`.
+The follow-up pull request records its exact source revision, CI outcomes and
+independent audit verification once those checks finish.
 
 Recovery is to stop the relevant workflow/local command and revert the approved
 change if needed. Keep prior code, product artifacts and approval records intact.
