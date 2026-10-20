@@ -9,15 +9,22 @@ on:
 
 permissions:
   contents: read
-  issues: write
-  pull-requests: write
 
 jobs:
   validate-control-plane:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Test credential scanner
+        run: python -m unittest discover -s tests -p 'test_control_secret_scan.py' -v
 
       - name: Validate required control files
         shell: bash
@@ -29,10 +36,9 @@ jobs:
           test -f .jarvis/instructions/operating-contract.md
           grep -q 'provider: github' .jarvis/config.yaml
           grep -q 'approval_required' .jarvis/config.yaml
-          if grep -RInE '(sk-[A-Za-z0-9]|AIza[A-Za-z0-9_-]{20,}|AKIA[A-Z0-9]{16}|-----BEGIN .*PRIVATE KEY-----)' .jarvis .github; then
-            echo 'Potential credential detected in control-plane files.'
-            exit 1
-          fi
+
+      - name: Check control-plane credential patterns
+        run: python scripts/check_control_secrets.py
 
       - name: Summarize synchronization scope
         run: |
