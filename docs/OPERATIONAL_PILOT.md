@@ -15,11 +15,12 @@ not demonstrate deployment of the complete multi-provider swarm.
 | Public GitHub audit | Reads public repository metadata and creates deterministic findings and proposals. | Does not inspect every repository's CI, code, deployments or revenue. |
 | Audit MemPalace receipts | Hashes reports and preserves a local ledger, manifest and anchor in each run's artifact. | No shared memory service or restored cross-run history. |
 | Node HTTP pilot | Authenticated repository-scoped planning, effective dry-run, bounded advisory calls. | Local-only; no hosted service, production identity, durable worker or aggregate spending budget. |
-| Shared Prompt #11 profile | All seven Python workflows and the Node planner resolve the same versioned guidance and record its hash. | Coverage proves the instruction source, not provider compliance or remote synchronization. |
+| Shared Prompt #11 profile | All eight Python workflows and the Node planner resolve the same versioned guidance and record its hash. | Coverage proves the instruction source, not provider compliance or remote synchronization. |
 | Optional business context | Projects allowed owner facts once per local invocation; every executed Python AI step receives the same task data. | Private tax and administration fields are excluded; no automatic cloud-agent memory sync. |
 | Provider adapters | Require explicit models, bound responses and reject failed, refused, truncated or empty output before downstream work. | Live account access and end-to-end provider exchanges are not established by offline tests. |
 | Hostinger adapter | GET-only bounded inventory verifies pagination and duplicate records before a metadata-only receipt. | No account connection verified; completion is not a transactional snapshot or deployment. |
 | Funding-route review | Preserves four exact latest routes, earlier conflicting evidence and unresolved review checks. | Destination, attribution, terms and publication remain unverified. |
+| Creative studio packet | Four-format local template packet, six distribution briefs, three AI-workspace briefs, hashed files and an approval stop. | Intake is required; no finished media, account connection or publication. |
 
 ## Verified audit and triggers
 
@@ -34,6 +35,19 @@ The first verified review-branch run was `39467647402`, at source head
 `39470533073` completed successfully at commit
 `940e1f4b08061c7caeb8900e8590f69376360771`. Its checkout has the same source tree
 as the reviewed revision. Later runs must be checked against their own commits.
+
+The subsequent shared-profile, business-context and Hostinger repair in PR #19
+was merged as `e30e7b769a0c5eec6e31f44d956419880e02cd13`. All five main workflows
+passed at that commit. Audit run `39476724554` recorded 210 passing tests, seven
+covered workflows, 40 public repository records, and successful internal hash and
+receipt verification. Artifact `12288229398` could not be downloaded for an
+independent local check: an initial timeout and one transport-connectivity failure
+returned no usable ZIP. Its contents and ZIP digest were not independently
+verified outside Actions. The PR records the exact source tree and evidence links.
+
+The creative-studio extension adds the eighth catalog workflow after that
+seven-workflow audit. Its own reviewed revision and checks are recorded in the
+studio follow-up pull request; the earlier audit is not evidence for later code.
 
 The workflow has `contents: read`, a 15-minute timeout and a cap of 250 repository
 records. Explicit owner scope selects public API requests without a token; a
@@ -87,6 +101,9 @@ is part of this repository maintenance.
    `5c2eede966d4663bf9f1433516cc7d4bfe608ff3`.
 3. PR #6: retargeted from the Control Tower branch to main, then merged as
    `940e1f4b08061c7caeb8900e8590f69376360771`.
+4. PR #19: shared Prompt #11, business context, Hostinger/referral integration and
+   the Python 3.13 SQLite cleanup repair, merged as
+   `e30e7b769a0c5eec6e31f44d956419880e02cd13`.
 
 The review branches preserve the dependency ancestry. The earlier automatic
 review block was resolved by the owner's subsequent approval; the three merges

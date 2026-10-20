@@ -12,7 +12,7 @@ An auditable, provider-neutral assistant that coordinates work across OpenAI, Ge
 - Correlation IDs, timestamps, provider/model records, and response hashes
 - Connector health checks that never reveal secrets
 - Command-line interface with JSON output for automations
-- One versioned Prompt #11 operating profile across all seven catalog workflows and the local Node task planner
+- One versioned Prompt #11 operating profile across all eight catalog workflows and the local Node task planner
 - GitHub Actions tests and dependency review
 - Extension contract for GitHub, Hostinger, Slack, Zapier, and other connectors
 
@@ -108,7 +108,7 @@ AI step unless `--allow-external` is supplied; downstream steps remain unexecute
 Handoff steps create drafts in `data/outbox` and require a separate, authorized
 delivery to reach another system.
 
-All seven catalog entries resolve the fixed Prompt #11 operating profile
+All eight catalog entries resolve the fixed Prompt #11 operating profile
 `P-011-E6C-001`, revision `repository-1`. Each executed AI step receives the shared
 guidance followed by its existing role. Plans, reports and validation retain the
 profile's exact SHA-256 hash, and the run cache includes that identity. Missing
@@ -139,6 +139,7 @@ Examples from the catalog:
 - `repository_fleet_review`: GitHub inventory of accessible repositories → ChatGPT portfolio review → GitHub draft handoff.
 - `prompt_11_product_factory`: market research → product genome → independent QA challenge → master build → owner approval → Business handoff.
 - `jarvis_problem_council`: evidence research → scenarios → adversarial review → synthesis → blind-spot challenge → verification → owner approval.
+- `creative_studio_package`: local production templates → local review handoff → owner review; zero AI or publishing calls.
 
 Identical workflow inputs reuse their prior completed report so retries do not accidentally
 repeat paid calls. Supply `--force` only when a deliberate fresh run is required. Approval
@@ -187,6 +188,27 @@ site deployment, funding submission or shared remote memory is established by
 these local modules. See [the proposed workflow mappings](docs/PROPOSED_HOSTINGER_WORKFLOW_MAPPINGS.md),
 [Hostinger adapter](docs/HERMES_MEMPALACE_HOSTINGER.md) and
 [funding review contract](docs/REFERRAL_CROSS_PLATFORM_INTEGRATION.md).
+
+## Creative studio production packets
+
+The Evolutionary Evolutions Creative Creations Studios of Intergalactic Corporate
+Services LLC now has a fixed local configuration and a production-packet workflow.
+It prepares reusable structures for Videos, eBooks, Audiobooks and Video Books,
+six distribution briefs and three AI-workspace briefs. The exact owner-declared
+brand and scope can also travel as optional business-context task data.
+
+```bash
+jarvis plan creative_studio_package "Prepare the studio intake packet" --json
+jarvis run creative_studio_package "Prepare the studio intake packet" --json
+```
+
+The run creates a hashed template packet and a local review handoff before queuing
+owner review. The packet remains `intake_required` and `template_only`; it contains
+no rendered media and sends no handoffs. Existing approvals stop the workflow and
+do not resume it automatically. Cached studio runs reverify the packet and its
+retained manifest hash before reuse. Configuration changes produce a fresh run.
+See [the studio workflow](docs/CREATIVE_STUDIO_WORKFLOW.md) for the packet contract,
+offline verifier, intake fields and intended channel/workspace mappings.
 
 ```bash
 jarvis validate-workflows --json

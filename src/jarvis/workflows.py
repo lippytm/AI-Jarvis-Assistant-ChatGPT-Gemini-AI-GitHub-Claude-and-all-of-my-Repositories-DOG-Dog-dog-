@@ -17,6 +17,8 @@ from .prompt_profiles import (PromptProfile, PromptProfileError, load_prompt_pro
                               validate_reference)
 from .safety import find_sensitive, redact
 from .business_context import BusinessContext, load_business_context
+from .creative_studio import (StudioConfig, build_packet, load_studio_config,
+                              validate_business_context, verify_packet)
 
 
 TOKEN = re.compile(r"{{\s*([a-zA-Z0-9_.-]+)\s*}}")
@@ -44,7 +46,7 @@ class WorkflowRunner:
     def load(self, name: str) -> dict[str, Any]:
         return self._load(name)[0]
 
-    def _load(self, name: str) -> tuple[dict[str, Any], PromptProfile | None]:
+    def _load(self, name: str) -> tuple[dict[str, Any], PromptProfile | None, StudioConfig | None]:
         if not WORKFLOW_NAME.fullmatch(name):
             raise WorkflowError("Workflow name must be a registered filename without a path")
         path = self.workflow_dir / f"{name}.json"
@@ -53,7 +55,7 @@ class WorkflowRunner:
         return self._read_definition(path, required_profile=not self.allow_unprofiled)
 
     def _read_definition(self, path: Path, *, required_profile: bool
-                         ) -> tuple[dict[str, Any], PromptProfile | None]:
+                         ) -> tuple[dict[str, Any], PromptProfile | None, StudioConfig | None]:
         try:
             definition = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, ValueError) as exc:
@@ -61,15 +63,24 @@ class WorkflowRunner:
         errors = self.validate_definition(definition)
         if errors:
             raise WorkflowError("; ".join(errors))
+        profile = None
         if "prompt_profile" not in definition:
             if required_profile:
                 raise WorkflowError("Workflow requires a prompt_profile reference")
-            return definition, None
-        try:
-            profile = load_prompt_profile(definition["prompt_profile"], self.workflow_dir.parent)
-        except PromptProfileError as exc:
-            raise WorkflowError(str(exc)) from exc
-        return definition, profile
+        else:
+            try:
+                profile = load_prompt_profile(definition["prompt_profile"], self.workflow_dir.parent)
+            except PromptProfileError as exc:
+                raise WorkflowError(str(exc)) from exc
+        studio = None
+        if any(step["type"] == "studio_package" for step in definition["steps"]):
+            if profile is None:
+                raise WorkflowError("A studio package requires the shared prompt profile")
+            try:
+                studio = load_studio_config(self.workflow_dir.parent)
+            except (OSError, ValueError):
+                raise WorkflowError("Cannot resolve local creative studio configuration") from None
+        return definition, profile, studio
 
     def validate_all(self) -> dict[str, list[str]]:
         return self.validate_catalog()["workflows"]
@@ -83,11 +94,12 @@ class WorkflowRunner:
                 results[path.stem] = ["Workflow filename must contain only letters, numbers, underscores or hyphens"]
                 continue
             try:
-                definition, profile = self._read_definition(path, required_profile=True)
+                definition, profile, studio = self._read_definition(path, required_profile=True)
                 assert profile is not None
                 results[path.stem] = []
                 covered[path.stem] = {"workflow_sha256": self._definition_hash(definition),
-                                      "prompt_profile": profile.metadata()}
+                                      "prompt_profile": profile.metadata(),
+                                      **self._studio_evidence(studio)}
             except WorkflowError as exc:
                 results[path.stem] = [str(exc)]
         valid = bool(results) and not any(results.values())
@@ -108,10 +120,24 @@ class WorkflowRunner:
         return {"prompt_profile": profile.metadata() if profile else None,
                 "profile_status": "resolved" if profile else "unprofiled_ad_hoc"}
 
+    @staticmethod
+    def _studio_evidence(studio: StudioConfig | None) -> dict[str, Any]:
+        return {"creative_studio": studio.metadata()} if studio else {}
+
+    @staticmethod
+    def _check_studio_context(studio: StudioConfig | None,
+                              business: BusinessContext | None) -> None:
+        if studio is not None:
+            try:
+                validate_business_context(studio, business)
+            except (TypeError, ValueError):
+                raise WorkflowError("Business context conflicts with creative studio configuration") from None
+
     def plan(self, name: str, input_text: str, *,
              business_context: Path | str | None = None) -> dict[str, Any]:
-        definition, profile = self._load(name)
+        definition, profile, studio = self._load(name)
         business = load_business_context(business_context) if business_context is not None else None
+        self._check_studio_context(studio, business)
         planned = []
         external_calls = 0
         for step in definition["steps"]:
@@ -125,6 +151,7 @@ class WorkflowRunner:
         findings = sorted({finding.kind for finding in find_sensitive(input_text)})
         return {"workflow": name, "workflow_sha256": self._definition_hash(definition),
                 **self._profile_evidence(profile), "valid": True, "steps": planned,
+                **self._studio_evidence(studio),
                 **({"business_context": business.metadata()} if business else {}),
                 "external_calls": external_calls,
                 "external_call_budget": self.tower.settings.max_external_calls,
@@ -159,9 +186,11 @@ class WorkflowRunner:
             else:
                 seen.add(step_id)
             kind = step.get("type")
-            if not isinstance(kind, str) or kind not in {"ai", "github_inventory", "handoff", "approval"}:
+            if not isinstance(kind, str) or kind not in {"ai", "github_inventory", "handoff", "approval", "studio_package"}:
                 errors.append(f"{prefix} has an unsupported type")
                 continue
+            if kind == "studio_package" and set(step) - {"id", "type"}:
+                errors.append(f"{prefix} studio_package accepts only id and type")
             required = {"ai": "prompt", "handoff": "content", "approval": "summary"}.get(kind)
             if required and (not isinstance(step.get(required), str) or not step[required].strip()):
                 errors.append(f"{prefix} requires nonempty text in {required}")
@@ -173,8 +202,9 @@ class WorkflowRunner:
     def run(self, name: str, input_text: str, allow_external: bool = False,
             force: bool = False, allow_sensitive: bool = False, *,
             business_context: Path | str | None = None) -> dict[str, Any]:
-        definition, profile = self._load(name)
+        definition, profile, studio = self._load(name)
         business = load_business_context(business_context) if business_context is not None else None
+        self._check_studio_context(studio, business)
         external_calls = sum(1 for step in definition["steps"]
                              if step.get("type") == "ai" and step.get("provider", "mock") != "mock")
         if external_calls > self.tower.settings.max_external_calls:
@@ -187,9 +217,11 @@ class WorkflowRunner:
         definition_hash = self._definition_hash(definition)
         profile_evidence = self._profile_evidence(profile)
         business_evidence = {"business_context": business.metadata()} if business else {}
+        studio_evidence = self._studio_evidence(studio)
         identity = {"contract": 3, "workflow": name, "workflow_sha256": definition_hash,
                     **profile_evidence,
                     **business_evidence,
+                    **studio_evidence,
                     "input": input_text, "allow_external": allow_external,
                     "allow_sensitive": allow_sensitive}
         idempotency_key = sha256(json.dumps(identity, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
@@ -198,10 +230,14 @@ class WorkflowRunner:
         if cache_path.is_file() and not force:
             cached = json.loads(cache_path.read_text(encoding="utf-8"))
             if cached.get("status") in {"completed", "pending_approval"}:
+                if studio is not None:
+                    self._verify_cached_studio(cached, definition, name, input_text,
+                                               profile, studio, business, idempotency_key)
                 cached["reused"] = True
                 return cached
         run_id = str(uuid4())
-        context: dict[str, Any] = {"input": input_text, "run_id": run_id, "steps": {}}
+        context: dict[str, Any] = {"input": input_text, "run_id": run_id, "steps": {},
+                                   "workflow": {"name": name, "sha256": definition_hash}}
         results: list[dict[str, Any]] = []
         status = "completed"
         for step in definition["steps"]:
@@ -210,7 +246,7 @@ class WorkflowRunner:
             step_id = step["id"]
             kind = step["type"]
             try:
-                result = self._execute_step(step, context, run_id, allow_external, profile, business)
+                result = self._execute_step(step, context, run_id, allow_external, profile, business, studio)
             except Exception as exc:
                 # Preserve failure evidence without logging prompts, keys or response bodies.
                 result = {"status": "failed", "output": "[Step failed; downstream work stopped]",
@@ -224,6 +260,7 @@ class WorkflowRunner:
         report = {"workflow": name, "workflow_sha256": definition_hash,
                   **profile_evidence,
                   **business_evidence,
+                  **studio_evidence,
                   "run_id": run_id, "idempotency_key": idempotency_key,
                   "created_at": utc_now(), "status": status, "steps": results,
                   "not_run_steps": [step["id"] for step in definition["steps"][len(results):]]}
@@ -235,10 +272,111 @@ class WorkflowRunner:
             cache_path.write_text(json.dumps(safe_report, indent=2), encoding="utf-8")
         return safe_report
 
+    def _verify_cached_studio(self, cached: dict[str, Any], definition: dict[str, Any],
+                              name: str, input_text: str, profile: PromptProfile | None,
+                              studio: StudioConfig, business: BusinessContext | None,
+                              idempotency_key: str) -> None:
+        """Reconcile cached execution with its definition and verified local packets."""
+        try:
+            run_id = cached.get("run_id")
+            if (not isinstance(run_id, str) or not re.fullmatch(
+                    r"[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}", run_id)
+                    or profile is None or not isinstance(cached.get("steps"), list)):
+                raise ValueError()
+            expected_profile = profile.metadata()
+            expected_business = business.metadata() if business else None
+            expected_workflow = {"name": name, "sha256": self._definition_hash(definition)}
+            report_keys = {"workflow", "workflow_sha256", "prompt_profile", "profile_status",
+                           "creative_studio", "run_id", "idempotency_key", "created_at",
+                           "status", "steps", "not_run_steps"}
+            if business:
+                report_keys.add("business_context")
+            if (set(cached) != report_keys
+                    or cached.get("workflow") != name
+                    or cached.get("workflow_sha256") != expected_workflow["sha256"]
+                    or cached.get("idempotency_key") != idempotency_key
+                    or cached.get("profile_status") != "resolved"
+                    or cached.get("prompt_profile") != expected_profile
+                    or cached.get("creative_studio") != studio.metadata()
+                    or cached.get("business_context") != expected_business
+                    or not isinstance(cached.get("created_at"), str)):
+                raise ValueError()
+            steps = definition["steps"]
+            approval_index = next((index for index, step in enumerate(steps)
+                                   if step["type"] == "approval"), None)
+            executed_count = len(steps) if approval_index is None else approval_index + 1
+            expected_status = "completed" if approval_index is None else "pending_approval"
+            if (cached.get("status") != expected_status
+                    or len(cached["steps"]) != executed_count
+                    or cached.get("not_run_steps") != [step["id"] for step in steps[executed_count:]]):
+                raise ValueError()
+            runtime_keys = {"id", "type", "started_at", "duration_ms"}
+            result_keys = {
+                "ai": {"status", "output", "task_id", "provider", "model", "content_sha256"},
+                "github_inventory": {"status", "output", "repository_count"},
+                "handoff": {"status", "output", "path", "destination", "note"},
+                "approval": {"status", "output", "approval_id", "approval"},
+            }
+            statuses = {"ai": "completed", "github_inventory": "completed",
+                        "handoff": "drafted", "studio_package": "drafted", "approval": "pending_approval"}
+            for step, recorded in zip(steps[:executed_count], cached["steps"]):
+                kind = step["type"]
+                if (not isinstance(recorded, dict) or recorded.get("id") != step["id"]
+                        or recorded.get("type") != kind or recorded.get("status") != statuses[kind]
+                        or not isinstance(recorded.get("started_at"), str)
+                        or type(recorded.get("duration_ms")) not in {int, float}
+                        or recorded["duration_ms"] < 0 or not isinstance(recorded.get("output"), str)):
+                    raise ValueError()
+                if kind != "studio_package":
+                    if set(recorded) != runtime_keys | result_keys[kind]:
+                        raise ValueError()
+                    if kind == "handoff":
+                        destination = re.sub(r"[^a-zA-Z0-9_-]", "-", step.get("destination", "workspace"))
+                        path = self.outbox_dir / f"{run_id}-{step['id']}-{destination}.md"
+                        if (recorded["path"] != str(path) or recorded["destination"] != destination
+                                or recorded["note"] != "Draft only; no message was sent or published."):
+                            raise ValueError()
+                    if kind == "approval":
+                        approval = recorded["approval"]
+                        approval_id = f"{run_id}-{step['id']}"
+                        if (not isinstance(approval, dict)
+                                or set(approval) != {"id", "run_id", "action", "summary", "status", "created_at"}
+                                or recorded["approval_id"] != approval_id or approval["id"] != approval_id
+                                or approval["run_id"] != run_id or approval["status"] != "pending"
+                                or approval["action"] != step.get("action", step["id"])
+                                or approval["summary"] != recorded["output"]
+                                or not isinstance(approval["created_at"], str)):
+                            raise ValueError()
+                    continue
+                package = (self.outbox_dir / f"{run_id}-{step['id']}-studio").absolute()
+                if recorded.get("package_path") != str(package):
+                    raise ValueError()
+                verified = verify_packet(package)
+                if (verified.get("valid") is not True
+                        or verified.get("manifest_sha256") != recorded.get("manifest_sha256")
+                        or verified.get("run_id") != run_id
+                        or verified.get("studio_config") != studio.metadata()
+                        or verified.get("prompt_profile") != expected_profile
+                        or verified.get("workflow") != expected_workflow
+                        or verified.get("business_context") != expected_business
+                        or verified.get("input_sha256") != sha256(input_text.encode("utf-8")).hexdigest()):
+                    raise ValueError()
+                expected_result = {**verified, "status": "drafted", "package_status": verified["status"],
+                                   "output": json.dumps(verified, sort_keys=True)}
+                actual_result = {key: value for key, value in recorded.items() if key not in runtime_keys}
+                # Compare serialized values so bool/int aliases cannot change assertions.
+                if json.dumps(actual_result, sort_keys=True, allow_nan=False) != json.dumps(
+                        expected_result, sort_keys=True, allow_nan=False):
+                    raise ValueError()
+            json.dumps(cached, allow_nan=False)
+        except (OSError, TypeError, ValueError, KeyError):
+            raise WorkflowError("Cached studio packet is missing or invalid; verify it or create a fresh run with --force") from None
+
     def _execute_step(self, step: dict[str, Any], context: dict[str, Any],
                       run_id: str, allow_external: bool,
                       profile: PromptProfile | None = None,
-                      business_context: BusinessContext | None = None) -> dict[str, Any]:
+                      business_context: BusinessContext | None = None,
+                      studio_config: StudioConfig | None = None) -> dict[str, Any]:
         step_id = step["id"]
         kind = step["type"]
         if kind == "ai":
@@ -256,6 +394,15 @@ class WorkflowRunner:
                 result = {"status": "completed", "output": response.content,
                           "task_id": response.task_id, "provider": response.provider,
                           "model": response.model, "content_sha256": response.content_sha256}
+        elif kind == "studio_package":
+            if studio_config is None or profile is None:
+                raise WorkflowError("Studio configuration and prompt profile must be resolved")
+            package = build_packet(
+                studio_config, (self.outbox_dir / f"{run_id}-{step_id}-studio").absolute(),
+                run_id=run_id, input_text=context["input"], prompt_profile=profile.metadata(),
+                workflow=context["workflow"], business_context=business_context)
+            result = {**package, "status": "drafted", "package_status": package["status"],
+                      "output": json.dumps(package, sort_keys=True)}
         elif kind == "github_inventory":
             repos = list_repositories(step.get("owner"), self.tower.settings.timeout_seconds)
             result = {"status": "completed", "output": json.dumps(repos, indent=2),

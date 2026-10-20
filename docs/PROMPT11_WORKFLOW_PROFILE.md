@@ -1,7 +1,7 @@
 # Prompt #11 workflow operating profile
 
 The repository now has one explicitly versioned operating profile shared by all
-seven Python workflow definitions. It supplies actual system guidance to each
+eight Python workflow definitions. It supplies actual system guidance to each
 AI step that executes, and records the resolved profile in plans, run reports
 and catalog validation. It does not activate providers or confer authority to
 publish, merge, deploy, spend, or send messages.
@@ -40,11 +40,18 @@ Every `workflows/*.json` entry must declare the known ID and revision:
 "prompt_profile": {"id": "P-011-E6C-001", "revision": "repository-1"}
 ```
 
-The current catalog contains `affiliate_site_review`, `jarvis_problem_council`,
+The current catalog contains `affiliate_site_review`, `creative_studio_package`, `jarvis_problem_council`,
 `life_business_daily_briefing`, `multi_ai_business_review`,
 `prompt_11_product_factory`, `repository_fleet_review` and
 `unified_life_business_creation`. Validation discovers all JSON entries; adding
 a workflow without the reference makes coverage incomplete and exits nonzero.
+
+The creative-studio workflow prepares local templates and contains no AI call.
+It also resolves the fixed studio configuration, records that configuration's
+exact hash in catalog, plan, report and cache identity, and verifies retained
+packet hashes before reusing a cached studio run. Business-context metadata is
+included when supplied. Its template packet and review handoff precede the owner
+approval stop; profile coverage is not media-production or publication evidence.
 No shipping workflow is silently exempted. Invalid filenames, malformed
 definitions, unknown IDs or revisions, and unavailable or invalid profile files
 also prevent successful validation.
@@ -91,7 +98,7 @@ unprofiled run.
 The Python and Node system-text builders produce identical text for the same
 profile and role. Node retains its existing authentication, repository/action
 scope, external-call opt-in and approval boundaries. It does not execute the
-Python JSON catalog, so its integration is verified separately from the seven
+Python JSON catalog, so its integration is verified separately from the eight
 catalog entries. See [the runtime documentation](../runtime/README.md) for the
 local task endpoint and its remaining deployment/provider limits.
 
