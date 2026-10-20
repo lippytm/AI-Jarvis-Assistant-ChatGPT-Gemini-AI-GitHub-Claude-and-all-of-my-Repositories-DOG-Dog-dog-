@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "account_status": "unverified",
+  "capabilities": [
+    {"id":"hosting-website-inventory","surface":"Hostinger hosting API","operation":"GET /api/hosting/v1/websites","documentation":"documented","account_connection":"unverified","implementation":"read-only adapter"},
+    {"id":"manual-ai-builder","surface":"AI Builder Manual mode","operation":"visual editor and AI drafting","documentation":"documented UI","account_connection":"unverified","implementation":"handoff draft only"},
+    {"id":"agentic-ai-builder","surface":"AI Builder Agentic mode / Horizons","operation":"POST /api/horizons/v1/websites creates a site; GET /api/horizons/v1/websites/{websiteId} returns an editor link","documentation":"documented API","account_connection":"unverified","implementation":"disabled; no billable or creation calls"},
+    {"id":"ai-store","surface":"AI Builder ecommerce","operation":"store creation and editing in builder","documentation":"documented UI","account_connection":"unverified","implementation":"handoff draft only"},
+    {"id":"wordpress-ai-tools","surface":"Hostinger WordPress AI tools","operation":"plan-specific features","documentation":"endpoint family documented","account_connection":"unverified","implementation":"disabled pending site inventory"}
+  ]
+}

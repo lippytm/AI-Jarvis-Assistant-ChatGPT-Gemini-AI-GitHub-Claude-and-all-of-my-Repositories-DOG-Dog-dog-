@@ -7,10 +7,22 @@ async function postJson(url, headers, body) {
   const response = await fetch(url, {
     method: 'POST',
     headers: { 'content-type': 'application/json', ...headers },
-    body: JSON.stringify(body)
+    body: JSON.stringify(body),
+    redirect: 'error',
+    signal: AbortSignal.timeout(30_000)
   });
-  const text = await response.text();
-  if (!response.ok) throw new Error(`${response.status} from provider: ${text.slice(0, 500)}`);
+  if (!response.ok) {
+    await response.body?.cancel();
+    throw new Error('Provider request failed');
+  }
+  const chunks = [];
+  let size = 0;
+  for await (const chunk of response.body || []) {
+    size += chunk.length;
+    if (size > 1024 * 1024) throw new Error('Provider response exceeded the local pilot limit');
+    chunks.push(Buffer.from(chunk));
+  }
+  const text = Buffer.concat(chunks).toString('utf8');
   return text ? JSON.parse(text) : {};
 }
 
@@ -30,14 +42,14 @@ export async function askOpenAI(prompt, env = process.env) {
   const key = required('OPENAI_API_KEY', env.OPENAI_API_KEY);
   return postJson(env.OPENAI_BASE_URL || 'https://api.openai.com/v1/chat/completions',
     { authorization: `Bearer ${key}` },
-    { model: env.OPENAI_MODEL || 'gpt-4o-mini', messages: [{ role: 'user', content: prompt }], temperature: 0.2 });
+    { model: env.OPENAI_MODEL || 'gpt-4o-mini', messages: [{ role: 'user', content: prompt }], temperature: 0.2, max_tokens: 2000 });
 }
 
 export async function askGemini(prompt, env = process.env) {
   const key = required('GEMINI_API_KEY', env.GEMINI_API_KEY);
   const model = env.GEMINI_MODEL || 'gemini-2.5-flash';
   return postJson(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`,
-    {}, { contents: [{ parts: [{ text: prompt }] }] });
+    {}, { contents: [{ parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: 2000 } });
 }
 
 export async function askClaude(prompt, env = process.env) {
