@@ -17,6 +17,7 @@ from .safety import find_sensitive, redact
 
 
 TOKEN = re.compile(r"{{\s*([a-zA-Z0-9_.-]+)\s*}}")
+WORKFLOW_NAME = re.compile(r"[a-zA-Z0-9_-]+")
 
 
 class WorkflowError(RuntimeError):
@@ -31,9 +32,12 @@ class WorkflowRunner:
     run_dir: Path = Path("data/runs")
 
     def list(self) -> list[str]:
-        return sorted(path.stem for path in self.workflow_dir.glob("*.json"))
+        return sorted(path.stem for path in self.workflow_dir.glob("*.json")
+                      if WORKFLOW_NAME.fullmatch(path.stem))
 
     def load(self, name: str) -> dict[str, Any]:
+        if not WORKFLOW_NAME.fullmatch(name):
+            raise WorkflowError("Workflow name must be a registered filename without a path")
         path = self.workflow_dir / f"{name}.json"
         if not path.is_file():
             raise WorkflowError(f"Workflow '{name}' not found")
@@ -46,11 +50,14 @@ class WorkflowRunner:
     def validate_all(self) -> dict[str, list[str]]:
         results: dict[str, list[str]] = {}
         for path in sorted(self.workflow_dir.glob("*.json")):
+            if not WORKFLOW_NAME.fullmatch(path.stem):
+                results[path.stem] = ["Workflow filename must contain only letters, numbers, underscores or hyphens"]
+                continue
             try:
                 definition = json.loads(path.read_text(encoding="utf-8"))
                 results[path.stem] = self.validate_definition(definition)
-            except json.JSONDecodeError as exc:
-                results[path.stem] = [f"Invalid JSON: {exc.msg}"]
+            except (ValueError, OSError) as exc:
+                results[path.stem] = [f"Cannot validate workflow: {type(exc).__name__}"]
         return results
 
     def plan(self, name: str, input_text: str) -> dict[str, Any]:
@@ -76,6 +83,8 @@ class WorkflowRunner:
     @staticmethod
     def validate_definition(definition: dict[str, Any]) -> list[str]:
         errors: list[str] = []
+        if not isinstance(definition, dict):
+            return ["Workflow must be an object"]
         steps = definition.get("steps")
         if not isinstance(steps, list) or not steps:
             return ["Workflow must contain at least one step"]
@@ -86,16 +95,22 @@ class WorkflowRunner:
                 errors.append(f"{prefix} must be an object")
                 continue
             step_id = step.get("id")
-            if not step_id or not re.fullmatch(r"[a-zA-Z0-9_-]+", str(step_id)):
+            if not isinstance(step_id, str) or not re.fullmatch(r"[a-zA-Z0-9_-]+", step_id):
                 errors.append(f"{prefix} has an invalid id")
             elif step_id in seen:
                 errors.append(f"{prefix} duplicates id '{step_id}'")
             else:
                 seen.add(step_id)
-            if step.get("type") not in {"ai", "github_inventory", "handoff", "approval"}:
+            kind = step.get("type")
+            if not isinstance(kind, str) or kind not in {"ai", "github_inventory", "handoff", "approval"}:
                 errors.append(f"{prefix} has an unsupported type")
-            if step.get("type") == "ai" and not step.get("prompt"):
-                errors.append(f"{prefix} requires prompt")
+                continue
+            required = {"ai": "prompt", "handoff": "content", "approval": "summary"}.get(kind)
+            if required and (not isinstance(step.get(required), str) or not step[required].strip()):
+                errors.append(f"{prefix} requires nonempty text in {required}")
+            for field in ("provider", "system", "destination", "action", "owner"):
+                if field in step and (not isinstance(step[field], str) or not step[field].strip()):
+                    errors.append(f"{prefix} requires nonempty text in {field}")
         return errors
 
     def run(self, name: str, input_text: str, allow_external: bool = False,
@@ -110,67 +125,90 @@ class WorkflowRunner:
         if findings and not allow_sensitive:
             kinds = ", ".join(sorted({finding.kind for finding in findings}))
             raise WorkflowError(f"Sensitive input detected ({kinds}); remove it or explicitly allow it")
-        idempotency_key = sha256(f"{name}\0{input_text}".encode()).hexdigest()
+        definition_hash = sha256(json.dumps(definition, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+        identity = {"contract": 2, "workflow": name, "workflow_sha256": definition_hash,
+                    "input": input_text, "allow_external": allow_external,
+                    "allow_sensitive": allow_sensitive}
+        idempotency_key = sha256(json.dumps(identity, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
         self.run_dir.mkdir(parents=True, exist_ok=True)
         cache_path = self.run_dir / f"{idempotency_key}.json"
         if cache_path.is_file() and not force:
             cached = json.loads(cache_path.read_text(encoding="utf-8"))
-            cached["reused"] = True
-            return cached
+            if cached.get("status") in {"completed", "pending_approval"}:
+                cached["reused"] = True
+                return cached
         run_id = str(uuid4())
         context: dict[str, Any] = {"input": input_text, "run_id": run_id, "steps": {}}
         results: list[dict[str, Any]] = []
+        status = "completed"
         for step in definition["steps"]:
             started = time.monotonic()
             started_at = utc_now()
             step_id = step["id"]
             kind = step["type"]
-            if kind == "ai":
-                provider = step.get("provider", "mock")
-                if provider != "mock" and not allow_external:
-                    result = {"status": "skipped", "output": "[Step skipped: external provider not enabled]",
-                              "reason": "external providers require --allow-external"}
-                else:
-                    prompt = self._render(step["prompt"], context)
-                    response = self.tower.run(prompt, provider, step.get("system"))
-                    result = {"status": "completed", "output": response.content,
-                              "task_id": response.task_id, "provider": response.provider,
-                              "model": response.model, "content_sha256": response.content_sha256}
-            elif kind == "github_inventory":
-                repos = list_repositories(step.get("owner"), self.tower.settings.timeout_seconds)
-                result = {"status": "completed", "output": json.dumps(repos, indent=2),
-                          "repository_count": len(repos)}
-            elif kind == "handoff":
-                content = self._render(step["content"], context)
-                self.outbox_dir.mkdir(parents=True, exist_ok=True)
-                destination = re.sub(r"[^a-zA-Z0-9_-]", "-", step.get("destination", "workspace"))
-                path = self.outbox_dir / f"{run_id}-{step_id}-{destination}.md"
-                path.write_text(content, encoding="utf-8")
-                result = {"status": "drafted", "output": content, "path": str(path),
-                          "destination": destination,
-                          "note": "Draft only; no message was sent or published."}
-            elif kind == "approval":
-                summary = self._render(step["summary"], context)
-                approval_id = f"{run_id}-{step_id}"
-                approval_root = self.run_dir.parent / "approvals"
-                record = ApprovalQueue(approval_root).create(
-                    approval_id, run_id, step.get("action", step_id), summary)
-                result = {"status": "pending_approval", "output": summary,
-                          "approval_id": approval_id, "approval": record}
-            else:
-                raise WorkflowError(f"Unsupported step type '{kind}'")
+            try:
+                result = self._execute_step(step, context, run_id, allow_external)
+            except Exception as exc:
+                # Preserve failure evidence without logging prompts, keys or response bodies.
+                result = {"status": "failed", "output": "[Step failed; downstream work stopped]",
+                          "error_type": type(exc).__name__}
             context["steps"][step_id] = result
             results.append({"id": step_id, "type": kind, "started_at": started_at,
                             "duration_ms": round((time.monotonic() - started) * 1000, 2), **result})
-        report = {"workflow": name, "run_id": run_id, "idempotency_key": idempotency_key,
-                  "created_at": utc_now(),
-                  "status": "completed", "steps": results}
+            if result["status"] not in {"completed", "drafted"}:
+                status = "blocked" if result["status"] == "skipped" else result["status"]
+                break
+        report = {"workflow": name, "workflow_sha256": definition_hash,
+                  "run_id": run_id, "idempotency_key": idempotency_key,
+                  "created_at": utc_now(), "status": status, "steps": results,
+                  "not_run_steps": [step["id"] for step in definition["steps"][len(results):]]}
         self.outbox_dir.mkdir(parents=True, exist_ok=True)
         safe_report = json.loads(redact(json.dumps(report)))
         (self.outbox_dir / f"{run_id}-report.json").write_text(
             json.dumps(safe_report, indent=2), encoding="utf-8")
-        cache_path.write_text(json.dumps(safe_report, indent=2), encoding="utf-8")
-        return report
+        if status in {"completed", "pending_approval"}:
+            cache_path.write_text(json.dumps(safe_report, indent=2), encoding="utf-8")
+        return safe_report
+
+    def _execute_step(self, step: dict[str, Any], context: dict[str, Any],
+                      run_id: str, allow_external: bool) -> dict[str, Any]:
+        step_id = step["id"]
+        kind = step["type"]
+        if kind == "ai":
+            provider = step.get("provider", "mock")
+            if provider != "mock" and not allow_external:
+                result = {"status": "skipped", "output": "[Step skipped: external provider not enabled]",
+                          "reason": "external providers require --allow-external"}
+            else:
+                prompt = self._render(step["prompt"], context)
+                response = self.tower.run(prompt, provider, step.get("system"))
+                result = {"status": "completed", "output": response.content,
+                          "task_id": response.task_id, "provider": response.provider,
+                          "model": response.model, "content_sha256": response.content_sha256}
+        elif kind == "github_inventory":
+            repos = list_repositories(step.get("owner"), self.tower.settings.timeout_seconds)
+            result = {"status": "completed", "output": json.dumps(repos, indent=2),
+                      "repository_count": len(repos)}
+        elif kind == "handoff":
+            content = self._render(step["content"], context)
+            self.outbox_dir.mkdir(parents=True, exist_ok=True)
+            destination = re.sub(r"[^a-zA-Z0-9_-]", "-", step.get("destination", "workspace"))
+            path = self.outbox_dir / f"{run_id}-{step_id}-{destination}.md"
+            path.write_text(content, encoding="utf-8")
+            result = {"status": "drafted", "output": content, "path": str(path),
+                      "destination": destination,
+                      "note": "Draft only; no message was sent or published."}
+        elif kind == "approval":
+            summary = self._render(step["summary"], context)
+            approval_id = f"{run_id}-{step_id}"
+            approval_root = self.run_dir.parent / "approvals"
+            record = ApprovalQueue(approval_root).create(
+                approval_id, run_id, step.get("action", step_id), summary)
+            result = {"status": "pending_approval", "output": summary,
+                      "approval_id": approval_id, "approval": record}
+        else:
+            raise WorkflowError(f"Unsupported step type '{kind}'")
+        return result
 
     @classmethod
     def _render(cls, template: str, context: dict[str, Any]) -> str:

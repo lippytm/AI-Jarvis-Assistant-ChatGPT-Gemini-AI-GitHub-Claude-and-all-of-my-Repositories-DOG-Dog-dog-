@@ -35,9 +35,10 @@ class Doctor:
         return {"status": "ready_local" if passed == len(checks) else "attention_required",
                 "readiness_score": score, "platform": platform.platform(),
                 "checks": checks, "providers": providers,
-                "live_workflows_ready": any(value for key, value in providers.items()
-                                            if key != "mock"),
-                "note": "Provider configuration is informational; doctor never makes API calls."}
+                "external_providers_configured": any(value for key, value in providers.items()
+                                                       if key != "mock"),
+                "live_workflows_ready": False,
+                "note": "Configuration is informational; live readiness requires a successful live receipt. Doctor never makes API calls."}
 
     @staticmethod
     def _check(name: str, passed: bool, detail: Any) -> dict[str, Any]:
