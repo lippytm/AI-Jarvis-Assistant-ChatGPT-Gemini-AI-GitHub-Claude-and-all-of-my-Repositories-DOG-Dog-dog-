@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AI Jarvis Prototype Blueprint",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "blueprint_id", "name", "version", "owner", "purpose", "users",
+    "roles", "providers", "tools", "memory_policy", "permissions",
+    "evaluation", "promotion_policy"
+  ],
+  "properties": {
+    "blueprint_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]+$"},
+    "name": {"type": "string", "minLength": 3},
+    "version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "owner": {"const": "Charles Earl Lipshay"},
+    "purpose": {"type": "string", "minLength": 10},
+    "users": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+    "roles": {"type": "array", "items": {"type": "string"}, "minItems": 1, "uniqueItems": true},
+    "providers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "status", "capabilities"],
+        "properties": {
+          "id": {"type": "string"},
+          "status": {"enum": ["unverified", "sandbox", "controlled-pilot", "approved"]},
+          "capabilities": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+        }
+      }
+    },
+    "tools": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "memory_policy": {
+      "type": "object",
+      "required": ["retention", "allowed_data", "prohibited_data"],
+      "properties": {
+        "retention": {"enum": ["none", "session", "project-approved"]},
+        "allowed_data": {"type": "array", "items": {"type": "string"}},
+        "prohibited_data": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "permissions": {
+      "type": "object",
+      "required": ["default", "approval_required", "prohibited"],
+      "properties": {
+        "default": {"const": "deny"},
+        "approval_required": {"type": "array", "items": {"type": "string"}},
+        "prohibited": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "evaluation": {
+      "type": "object",
+      "required": ["baseline", "metrics", "minimum_passes"],
+      "properties": {
+        "baseline": {"type": "string"},
+        "metrics": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+        "minimum_passes": {"type": "integer", "minimum": 1}
+      }
+    },
+    "promotion_policy": {
+      "type": "object",
+      "required": ["owner_approval", "tests_required", "rollback_required"],
+      "properties": {
+        "owner_approval": {"const": true},
+        "tests_required": {"const": true},
+        "rollback_required": {"const": true}
+      }
+    }
+  }
+}

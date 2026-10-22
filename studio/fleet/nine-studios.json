@@ -1,0 +1,119 @@
+{
+  "fleet_id": "jarvis-creative-creation-studios-nine",
+  "version": "0.1.0",
+  "owner": "Charles Earl Lipshay",
+  "status": "blueprint-only",
+  "purpose": "Nine isolated AI Jarvis Creative Creation Studio configurations for safely designing, building, evaluating, packaging, and improving the next generation of AI systems.",
+  "control_law": "Studios propose and test; deterministic evidence verifies; Charles approves promotion.",
+  "shared_rules": {
+    "default_permission": "deny",
+    "production_access": false,
+    "credential_access": false,
+    "customer_data_access": false,
+    "private_repository_disclosure": false,
+    "self_approval": false,
+    "self_promotion": false,
+    "uncontrolled_replication": false,
+    "merge_or_deploy_without_owner": false,
+    "required_outputs": [
+      "work_envelope",
+      "artifact",
+      "test_evidence",
+      "limitations",
+      "risk_report",
+      "result_hash",
+      "rollback",
+      "approval_state"
+    ]
+  },
+  "studios": [
+    {
+      "studio_id": "STUDIO-001",
+      "name": "Discovery and Research Studio",
+      "mission": "Turn verified user problems, technical evidence, and market signals into bounded opportunities.",
+      "inputs": ["approved research question", "public sources", "approved portfolio metadata"],
+      "outputs": ["evidence brief", "problem definition", "assumptions", "source ledger"],
+      "may_build_code": false,
+      "handoff_to": ["STUDIO-002", "STUDIO-008"]
+    },
+    {
+      "studio_id": "STUDIO-002",
+      "name": "Systems Blueprint Studio",
+      "mission": "Convert approved opportunities into architectures, contracts, threat boundaries, tests, and rollback plans.",
+      "inputs": ["evidence brief", "constraints", "existing contracts"],
+      "outputs": ["versioned blueprint", "interface contracts", "acceptance tests", "risk register"],
+      "may_build_code": false,
+      "handoff_to": ["STUDIO-003", "STUDIO-005"]
+    },
+    {
+      "studio_id": "STUDIO-003",
+      "name": "Coding Engine Studio",
+      "mission": "Implement the smallest reversible prototype using Codex, Copilot, and approved deterministic tools.",
+      "inputs": ["approved blueprint", "bounded work envelope", "allowed repository scope"],
+      "outputs": ["branch", "patch", "tests", "implementation receipt"],
+      "may_build_code": true,
+      "handoff_to": ["STUDIO-004", "STUDIO-005"]
+    },
+    {
+      "studio_id": "STUDIO-004",
+      "name": "Diagnostics and QA Studio",
+      "mission": "Reproduce failures, run deterministic checks, verify repairs, and measure regressions.",
+      "inputs": ["prototype artifact", "acceptance tests", "baseline results"],
+      "outputs": ["diagnostic report", "test evidence", "regression findings", "quality score"],
+      "may_build_code": true,
+      "handoff_to": ["STUDIO-003", "STUDIO-009"]
+    },
+    {
+      "studio_id": "STUDIO-005",
+      "name": "Security and Red-Team Studio",
+      "mission": "Test prompt injection, permissions, dependency risk, data leakage, misuse, and recovery.",
+      "inputs": ["blueprint", "prototype artifact", "threat model"],
+      "outputs": ["security findings", "abuse cases", "privacy report", "hardening proposals"],
+      "may_build_code": false,
+      "handoff_to": ["STUDIO-002", "STUDIO-003", "STUDIO-009"]
+    },
+    {
+      "studio_id": "STUDIO-006",
+      "name": "MemPalace Provenance Studio",
+      "mission": "Preserve approved decisions, versions, hashes, receipts, lessons, and lineage without storing secrets.",
+      "inputs": ["approved receipts", "decisions", "evaluation summaries"],
+      "outputs": ["provenance ledger", "version graph", "decision record", "memory freshness report"],
+      "may_build_code": false,
+      "handoff_to": ["STUDIO-001", "STUDIO-002", "STUDIO-009"]
+    },
+    {
+      "studio_id": "STUDIO-007",
+      "name": "Creative Experience Studio",
+      "mission": "Design accessible interfaces, learning experiences, documentation, demonstrations, and media prototypes.",
+      "inputs": ["approved product blueprint", "audience definition", "brand rules"],
+      "outputs": ["UX prototype", "documentation", "tutorial", "media package", "accessibility review"],
+      "may_build_code": true,
+      "handoff_to": ["STUDIO-004", "STUDIO-008"]
+    },
+    {
+      "studio_id": "STUDIO-008",
+      "name": "Business and Revenue Studio",
+      "mission": "Validate usefulness, audience, packaging, pricing hypotheses, cost, and sustainable delivery.",
+      "inputs": ["evidence brief", "prototype demonstration", "measured costs"],
+      "outputs": ["value proposition", "experiment plan", "unit-economics assumptions", "revenue score"],
+      "may_build_code": false,
+      "handoff_to": ["STUDIO-001", "STUDIO-007", "STUDIO-009"]
+    },
+    {
+      "studio_id": "STUDIO-009",
+      "name": "Integration and Release Studio",
+      "mission": "Assemble only verified artifacts, enforce promotion gates, and prepare reviewable release candidates.",
+      "inputs": ["QA pass", "security review", "provenance ledger", "business validation"],
+      "outputs": ["release candidate", "integration receipt", "rollback package", "owner approval request"],
+      "may_build_code": true,
+      "handoff_to": ["OWNER"]
+    }
+  ],
+  "promotion_gate": {
+    "minimum_weighted_score": 80,
+    "minimum_consecutive_passes": 3,
+    "required_reviews": ["diagnostics", "security", "privacy", "provenance", "business"],
+    "rollback_demonstrated": true,
+    "owner_approval_required": true
+  }
+}
