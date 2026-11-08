@@ -1,0 +1,54 @@
+version: 1
+last_verified: 2026-11-08
+source_of_truth:
+  runtime: kvm-8
+  code: github
+  public_content: hostinger-ai-builder
+  affiliate_tracking: pending_verified_links
+
+runtime:
+  kvm: 8
+  operating_system: arch-linux
+  services:
+    - name: jarvis-flow
+      port: 3002
+      exposure: local-only
+    - name: jarvis-hub
+      port: 3003
+      exposure: local-only
+  docker: not-installed
+  deployment_mode: node-native
+
+models:
+  - chatgpt-openai
+  - chatgpt-business
+  - gemini
+  - claude
+  - perplexity
+  - local-models
+  status: normalize-with-provenance-and-review
+
+repositories:
+  primary_account: lippytm
+  secondary_account: lippytmai
+  review_mode: read-only-by-default
+  automatic_production_changes: false
+
+hostinger:
+  public_hosting: aievolutionaryevolutions.online
+  com_site_status: suspended-until-hosting-restored
+  ai_builder_projects: multiple
+  affiliate_programs:
+    - hostinger-referral
+    - hostinger-affiliate-status-to-verify
+    - clonecast-status-to-verify
+  tracking_links: pending
+
+release_gates:
+  - backup-and-rollback
+  - least-privilege-secrets
+  - tests-and-health-checks
+  - security-review
+  - documentation
+  - affiliate-disclosure
+  - explicit-production-approval
