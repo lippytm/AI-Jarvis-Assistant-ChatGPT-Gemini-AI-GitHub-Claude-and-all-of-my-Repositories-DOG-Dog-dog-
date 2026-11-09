@@ -62,6 +62,12 @@ def list_repositories(owner: str | None = None, timeout: int = 30) -> list[dict[
         base_url = "https://api.github.com/user/repos?per_page=100&sort=updated&affiliation=owner,collaborator,organization_member"
     else:
         base_url = f"https://api.github.com/users/{quote(selected_owner, safe='')}/repos?per_page=100&sort=updated"
+        # Optional, separate credential used only to lift the 60-requests/hour
+        # unauthenticated limit on shared CI runners. The endpoint is public-only
+        # and _normalize still rejects any private record.
+        public_token = os.getenv("JARVIS_PUBLIC_INVENTORY_TOKEN")
+        if public_token:
+            headers["Authorization"] = f"Bearer {public_token}"
     repos: list[dict[str, Any]] = []
     seen: set[str] = set()
     for page in range(1, _MAX_PAGES + 1):
@@ -71,6 +77,11 @@ def list_repositories(owner: str | None = None, timeout: int = 30) -> list[dict[
                 batch = json.loads(response.read().decode())
                 links = response.headers.get("Link", "")
         except HTTPError as exc:
+            remaining = exc.headers.get("X-RateLimit-Remaining") if exc.headers else None
+            if exc.code in (403, 429) and remaining == "0":
+                raise GitHubInventoryError(
+                    f"GitHub returned HTTP {exc.code}: API rate limit exhausted; "
+                    "set JARVIS_PUBLIC_INVENTORY_TOKEN for public scans") from exc
             raise GitHubInventoryError(f"GitHub returned HTTP {exc.code}") from exc
         except (URLError, TimeoutError, UnicodeDecodeError, json.JSONDecodeError) as exc:
             raise GitHubInventoryError(f"GitHub inventory failed: {type(exc).__name__}") from exc

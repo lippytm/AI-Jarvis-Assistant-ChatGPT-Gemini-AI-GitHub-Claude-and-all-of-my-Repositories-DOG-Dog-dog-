@@ -59,6 +59,7 @@ jobs:
       - id: patrol
         run: python -m jarvis patrol --owner lippytm --json | tee jarvis-patrol.json
         env:
+          JARVIS_PUBLIC_INVENTORY_TOKEN: ${{ github.token }}
           JARVIS_PATROL_MAX_REPOSITORIES: "250"
           JARVIS_PATROL_STALE_DAYS: "120"
       - id: improve
