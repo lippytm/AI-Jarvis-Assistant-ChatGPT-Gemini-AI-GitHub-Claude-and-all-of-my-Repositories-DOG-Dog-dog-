@@ -34,6 +34,30 @@ class GitHubInventoryTests(unittest.TestCase):
         self.assertIsNone(request.get_header("Authorization"))
         self.assertEqual("lippytm/example", result[0]["full_name"])
 
+    def test_public_inventory_token_is_opt_in_and_stays_public(self):
+        with patch.dict("os.environ", {"GITHUB_TOKEN": "general", "JARVIS_PUBLIC_INVENTORY_TOKEN": "rate-limit"},
+                        clear=True), \
+                patch("jarvis.github_inventory.urlopen", return_value=Response([repository()])) as network:
+            list_repositories("lippytm")
+        request = network.call_args.args[0]
+        self.assertIn("/users/lippytm/repos?", request.full_url)
+        self.assertEqual("Bearer rate-limit", request.get_header("Authorization"))
+        with patch.dict("os.environ", {"JARVIS_PUBLIC_INVENTORY_TOKEN": "rate-limit"}, clear=True), \
+                patch("jarvis.github_inventory.urlopen", return_value=Response([repository(private=True)])):
+            with self.assertRaises(GitHubInventoryError):
+                list_repositories("lippytm")
+
+    def test_rate_limit_error_is_explained(self):
+        from email.message import Message
+        from urllib.error import HTTPError
+        headers = Message()
+        headers["X-RateLimit-Remaining"] = "0"
+        error = HTTPError("https://api.github.com", 403, "rate limited", headers, None)
+        with patch.dict("os.environ", {}, clear=True), \
+                patch("jarvis.github_inventory.urlopen", side_effect=error):
+            with self.assertRaisesRegex(GitHubInventoryError, "rate limit exhausted"):
+                list_repositories("lippytm")
+
     def test_environment_owner_also_selects_public_scope(self):
         with patch.dict("os.environ", {"GITHUB_TOKEN": "synthetic-token", "GITHUB_OWNER": "lippytm"}, clear=True), \
                 patch("jarvis.github_inventory.urlopen", return_value=Response([])) as network:
