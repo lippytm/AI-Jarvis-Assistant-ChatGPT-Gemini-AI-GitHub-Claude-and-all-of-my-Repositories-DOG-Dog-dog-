@@ -1,7 +1,7 @@
 # Prompt #11 workflow operating profile
 
 The repository now has one explicitly versioned operating profile shared by all
-eight Python workflow definitions. It supplies actual system guidance to each
+the Python workflow catalog. It supplies actual system guidance to each
 AI step that executes, and records the resolved profile in plans, run reports
 and catalog validation. It does not activate providers or confer authority to
 publish, merge, deploy, spend, or send messages.
@@ -98,7 +98,7 @@ unprofiled run.
 The Python and Node system-text builders produce identical text for the same
 profile and role. Node retains its existing authentication, repository/action
 scope, external-call opt-in and approval boundaries. It does not execute the
-Python JSON catalog, so its integration is verified separately from the eight
+Python JSON catalog, so its integration is verified separately from the
 catalog entries. See [the runtime documentation](../runtime/README.md) for the
 local task endpoint and its remaining deployment/provider limits.
 

@@ -12,7 +12,7 @@ An auditable, provider-neutral assistant that coordinates work across OpenAI, Ge
 - Correlation IDs, timestamps, provider/model records, and response hashes
 - Connector health checks that never reveal secrets
 - Command-line interface with JSON output for automations
-- One versioned Prompt #11 operating profile across all eight catalog workflows and the local Node task planner
+- One versioned Prompt #11 operating profile across the catalog workflows and the local Node task planner
 - Structured creative production packets with real local source drafts, dependency checks, and verified handoff files
 - Hypothetical production economics that separate cash costs from the value of production time
 - GitHub Actions tests and dependency review
@@ -113,7 +113,7 @@ AI step unless `--allow-external` is supplied; downstream steps remain unexecute
 Handoff steps create drafts in `data/outbox` and require a separate, authorized
 delivery to reach another system.
 
-All eight catalog entries resolve the fixed Prompt #11 operating profile
+All catalog entries resolve the fixed Prompt #11 operating profile
 `P-011-E6C-001`, revision `repository-1`. Each executed AI step receives the shared
 guidance followed by its existing role. Plans, reports and validation retain the
 profile's exact SHA-256 hash, and the run cache includes that identity. Missing
@@ -145,6 +145,18 @@ Examples from the catalog:
 - `prompt_11_product_factory`: market research → product genome → independent QA challenge → master build → owner approval → Business handoff.
 - `jarvis_problem_council`: evidence research → scenarios → adversarial review → synthesis → blind-spot challenge → verification → owner approval.
 - `creative_studio_package`: local production templates → local review handoff → owner review; zero AI or publishing calls.
+- `website_social_draft`: supplied website content → Gemini summary → Claude review → OpenAI SocialSwarms drafts → local review handoff and owner approval.
+
+For `website_social_draft`, supply the publication text and its source URL as input
+only after checking that sharing it with all three providers is authorized. Use
+`jarvis plan website_social_draft "public-safe source text" --json` to preview;
+`jarvis run website_social_draft "public-safe source text" --allow-external --json`
+makes three potentially billable provider calls and needs their configured API
+keys and models. Drafts are local files in `data/outbox`; review them privately.
+This workflow does not discover Hostinger sites, monitor publications, connect
+ChatGPT Business, write to GitHub or post to SocialSwarms. Approval records do
+not execute those actions. App subscriptions do not by themselves establish API
+access. Do not supply credentials, private customer data or unapproved content.
 
 Identical workflow inputs reuse their prior completed report so retries do not accidentally
 repeat paid calls. Supply `--force` only when a deliberate fresh run is required. Approval

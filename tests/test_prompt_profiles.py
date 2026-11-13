@@ -23,7 +23,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 REFERENCE = {"id": PROFILE_ID, "revision": PROFILE_REVISION}
 CATALOG = {"affiliate_site_review", "creative_studio_package", "jarvis_problem_council", "life_business_daily_briefing",
            "multi_ai_business_review", "prompt_11_product_factory", "repository_fleet_review",
-           "unified_life_business_creation"}
+           "unified_life_business_creation", "website_social_draft"}
 
 
 class PromptProfileTests(unittest.TestCase):
@@ -51,14 +51,14 @@ class PromptProfileTests(unittest.TestCase):
     def profile(self):
         return load_prompt_profile(REFERENCE, self.root)
 
-    def test_all_eight_shipping_workflows_have_verifiable_coverage(self):
+    def test_all_shipping_workflows_have_verifiable_coverage(self):
         runner = WorkflowRunner(self.tower, REPO_ROOT / "workflows")
         result = runner.validate_catalog()
         self.assertIs(result["valid"], True, result)
         self.assertEqual(CATALOG, set(result["workflows"]))
         coverage = result["prompt_profile_coverage"]
         self.assertIs(coverage["complete"], True)
-        self.assertEqual((8, 8), (coverage["workflow_count"], coverage["covered_count"]))
+        self.assertEqual((len(CATALOG), len(CATALOG)), (coverage["workflow_count"], coverage["covered_count"]))
         self.assertEqual([], coverage["uncovered_workflows"])
         actual_hash = sha256((REPO_ROOT / PROFILE_PATH).read_bytes()).hexdigest()
         for name, item in coverage["workflows"].items():
